@@ -13,10 +13,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js (Fix for Power Platform CLI)
+      - name: Set up Node.js 16 (Fix for Power Platform CLI)
         uses: actions/setup-node@v3
         with:
-          node-version: 18  # Byt från v20 till v18
+          node-version: 16  # Ändrat från 18 till 16
 
       - name: Install Power Platform CLI
         run: |
