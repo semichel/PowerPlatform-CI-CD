@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>När Då? - Gissa Årtalet!</title>
+    <title>När Då? - Placera på Tidslinjen!</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
         <div id="start-screen" class="screen active">
             <div class="logo">
                 <h1>När Då?</h1>
-                <p class="subtitle">Gissa vilket år det hände!</p>
+                <p class="subtitle">Placera händelsen på tidslinjen!</p>
             </div>
             <div class="start-options">
                 <div class="player-setup">
@@ -39,15 +39,19 @@
                 <div class="current-player">Det är <span id="player-turn"></span>s tur</div>
             </div>
             <div class="scoreboard" id="scoreboard"></div>
-            <div class="card">
-                <div class="card-category" id="card-category"></div>
-                <div class="card-question" id="card-question"></div>
-                <div class="card-hint" id="card-hint"></div>
+
+            <div class="new-card">
+                <div class="new-card-label">Placera denna händelse:</div>
+                <div class="card">
+                    <div class="card-category" id="card-category"></div>
+                    <div class="card-question" id="card-question"></div>
+                    <div class="card-hint" id="card-hint"></div>
+                </div>
             </div>
-            <div class="guess-area">
-                <input type="number" id="year-input" placeholder="Skriv ett årtal..." min="1" max="2026">
-                <button class="btn-primary" id="guess-btn" onclick="submitGuess()">Gissa!</button>
-            </div>
+
+            <div class="timeline-label">Tidslinjen - tryck där händelsen hör hemma:</div>
+            <div class="timeline" id="timeline"></div>
+
             <div id="result-area" class="result-area hidden">
                 <div id="result-text"></div>
                 <div id="result-points"></div>
