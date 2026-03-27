@@ -309,9 +309,18 @@ function handleHostMessage(conn, data) {
                 slotIndex: data.slotIndex,
                 players: players,
                 timeline: timeline,
+                roundPoints: roundPoints,
                 currentQuestionIndex: currentQuestionIndex,
                 currentPlayerIndex: currentPlayerIndex
             });
+            break;
+
+        case 'continue-round':
+            continueRound();
+            break;
+
+        case 'stop-round':
+            stopRound();
             break;
     }
 }
@@ -338,9 +347,10 @@ function handleGuestMessage(data) {
             showQuestion();
             break;
 
-        case 'placement-result':
+        case 'placement-result': {
             players = data.players;
             timeline = data.timeline;
+            roundPoints = data.roundPoints;
             currentQuestionIndex = data.currentQuestionIndex;
             currentPlayerIndex = data.currentPlayerIndex;
             const lastAdded = data.timeline[data.timeline.length - 1];
@@ -354,13 +364,32 @@ function handleGuestMessage(data) {
             } else {
                 correct = lastAdded.answer >= prevTimeline[slotIdx - 1].answer && lastAdded.answer <= prevTimeline[slotIdx].answer;
             }
-            const pts = correct ? 2 : 0;
-            showResult(lastAdded, correct, pts);
+            showResult(lastAdded, correct);
+            break;
+        }
+
+        case 'continue':
+            currentQuestionIndex = data.currentQuestionIndex;
+            roundPoints = data.roundPoints;
+            showQuestion();
+            break;
+
+        case 'stop':
+            players = data.players;
+            currentQuestionIndex = data.currentQuestionIndex;
+            currentPlayerIndex = data.currentPlayerIndex;
+            roundPoints = 0;
+            if (data.gameOver) {
+                endGame();
+            } else {
+                showQuestion();
+            }
             break;
 
         case 'next-turn':
             currentQuestionIndex = data.currentQuestionIndex;
             currentPlayerIndex = data.currentPlayerIndex;
+            roundPoints = 0;
             if (data.gameOver) {
                 endGame();
             } else {
@@ -414,6 +443,7 @@ function onlinePlaceEvent(slotIndex) {
             slotIndex: slotIndex,
             players: players,
             timeline: timeline,
+            roundPoints: roundPoints,
             currentQuestionIndex: currentQuestionIndex,
             currentPlayerIndex: currentPlayerIndex
         });
@@ -421,15 +451,49 @@ function onlinePlaceEvent(slotIndex) {
         if (hostConnection && hostConnection.open) {
             hostConnection.send({ type: 'place-event', slotIndex: slotIndex });
         } else {
-            Logger.log('ERROR', 'Inte ansluten till värd');
             alert('Tappade anslutningen till värden.');
         }
+    }
+}
+
+function onlineContinueRound() {
+    if (isHost) {
+        currentQuestionIndex++;
+        broadcastToGuests({
+            type: 'continue',
+            currentQuestionIndex: currentQuestionIndex,
+            roundPoints: roundPoints
+        });
+        showQuestion();
+    } else {
+        hostConnection.send({ type: 'continue-round' });
+    }
+}
+
+function onlineStopRound() {
+    if (isHost) {
+        players[currentPlayerIndex].score += roundPoints;
+        roundPoints = 0;
+        currentQuestionIndex++;
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+        const gameOver = currentQuestionIndex >= gameQuestions.length;
+        broadcastToGuests({
+            type: 'stop',
+            players: players,
+            currentQuestionIndex: currentQuestionIndex,
+            currentPlayerIndex: currentPlayerIndex,
+            gameOver: gameOver
+        });
+        if (gameOver) { endGame(); } else { showQuestion(); }
+    } else {
+        hostConnection.send({ type: 'stop-round' });
     }
 }
 
 function onlineNextTurn() {
     if (!isHost) return;
 
+    roundPoints = 0;
     currentQuestionIndex++;
     currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
 

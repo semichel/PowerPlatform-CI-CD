@@ -408,6 +408,80 @@ body {
     margin-bottom: 14px;
 }
 
+.result-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-continue {
+    flex: 1;
+    background: linear-gradient(135deg, #4ecca3, #38b28a);
+    color: white;
+    border: none;
+    padding: 16px 20px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    -webkit-appearance: none;
+    touch-action: manipulation;
+}
+
+.btn-continue:active {
+    transform: scale(0.97);
+    opacity: 0.9;
+}
+
+.btn-stop {
+    flex: 1;
+    background: linear-gradient(135deg, #e9c946, #d4a93a);
+    color: #1a1a2e;
+    border: none;
+    padding: 16px 20px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    -webkit-appearance: none;
+    touch-action: manipulation;
+}
+
+.btn-stop:active {
+    transform: scale(0.97);
+    opacity: 0.9;
+}
+
+.btn-continue.hidden,
+.btn-stop.hidden,
+#next-btn.hidden {
+    display: none;
+}
+
+/* Round points warning */
+.round-points {
+    text-align: center;
+    padding: 8px 14px;
+    background: rgba(233, 201, 70, 0.15);
+    border: 1px solid rgba(233, 201, 70, 0.3);
+    border-radius: 10px;
+    color: #e9c946;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+}
+
+.round-points.hidden {
+    display: none;
+}
+
+/* Full width buttons */
+.btn-full {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
 .points-perfect {
     color: #4ecca3;
 }
