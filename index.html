@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>När Då? - Gissa Årtalet!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <div class="logo">
+                <h1>När Då?</h1>
+                <p class="subtitle">Gissa vilket år det hände!</p>
+            </div>
+            <div class="start-options">
+                <div class="player-setup">
+                    <label for="player-count">Antal spelare:</label>
+                    <div class="player-count-selector">
+                        <button class="btn-round" onclick="changePlayerCount(-1)">-</button>
+                        <span id="player-count-display">2</span>
+                        <button class="btn-round" onclick="changePlayerCount(1)">+</button>
+                    </div>
+                    <div id="player-names"></div>
+                </div>
+                <div class="category-select">
+                    <label>Välj kategorier:</label>
+                    <div id="category-buttons"></div>
+                </div>
+                <button class="btn-primary" onclick="startGame()">Starta Spelet!</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div class="round-info">Fråga <span id="current-question">1</span> / <span id="total-questions">10</span></div>
+                <div class="current-player">Det är <span id="player-turn"></span>s tur</div>
+            </div>
+            <div class="scoreboard" id="scoreboard"></div>
+            <div class="card">
+                <div class="card-category" id="card-category"></div>
+                <div class="card-question" id="card-question"></div>
+                <div class="card-hint" id="card-hint"></div>
+            </div>
+            <div class="guess-area">
+                <input type="number" id="year-input" placeholder="Skriv ett årtal..." min="1" max="2026">
+                <button class="btn-primary" id="guess-btn" onclick="submitGuess()">Gissa!</button>
+            </div>
+            <div id="result-area" class="result-area hidden">
+                <div id="result-text"></div>
+                <div id="result-points"></div>
+                <button class="btn-primary" onclick="nextTurn()">Nästa</button>
+            </div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="screen">
+            <h1>Spelet är slut!</h1>
+            <div id="final-scores"></div>
+            <div id="winner-announcement"></div>
+            <button class="btn-primary" onclick="resetGame()">Spela igen</button>
+        </div>
+    </div>
+
+    <script src="questions.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
