@@ -28,8 +28,10 @@ function toggleCategory(btn, category) {
     btn.classList.toggle('selected');
     if (selectedCategories.has(category)) {
         selectedCategories.delete(category);
+        Logger.log('GAME', `Kategori avvald: ${category}`);
     } else {
         selectedCategories.add(category);
+        Logger.log('GAME', `Kategori vald: ${category}`);
     }
 }
 
@@ -38,6 +40,7 @@ function changePlayerCount(delta) {
     playerCount = Math.max(1, Math.min(6, playerCount + delta));
     document.getElementById('player-count-display').textContent = playerCount;
     updatePlayerNames();
+    Logger.log('GAME', `Antal spelare ändrat till ${playerCount}`);
 }
 
 function updatePlayerNames() {
@@ -55,6 +58,7 @@ function updatePlayerNames() {
 // Start Game
 function startGame() {
     if (selectedCategories.size === 0) {
+        Logger.log('GAME', 'Försökte starta utan kategorier');
         alert('Välj minst en kategori!');
         return;
     }
@@ -72,12 +76,17 @@ function startGame() {
     gameQuestions = shuffleArray(filtered).slice(0, playerCount * QUESTIONS_PER_PLAYER);
 
     if (gameQuestions.length === 0) {
+        Logger.log('ERROR', 'Inga frågor tillgängliga');
         alert('Inga frågor tillgängliga för valda kategorier!');
         return;
     }
 
     currentPlayerIndex = 0;
     currentQuestionIndex = 0;
+
+    const cats = [...selectedCategories].join(', ');
+    const playerNames = players.map(p => p.name).join(', ');
+    Logger.log('GAME', `Spel startat! Spelare: ${playerNames} | Kategorier: ${cats} | ${gameQuestions.length} frågor`);
 
     showScreen('game-screen');
     updateGameUI();
@@ -93,6 +102,8 @@ function updateGameUI() {
     document.getElementById('card-category').textContent = q.category;
     document.getElementById('card-question').textContent = q.question;
     document.getElementById('card-hint').textContent = q.hint ? `Ledtråd: ${q.hint}` : '';
+
+    Logger.log('GAME', `Fråga ${currentQuestionIndex + 1}/${gameQuestions.length}: "${q.question}" [${q.category}] (svar: ${q.answer})`);
 
     // Update scoreboard
     const scoreboard = document.getElementById('scoreboard');
@@ -117,6 +128,7 @@ function submitGuess() {
 
     if (isNaN(guess)) {
         input.style.borderColor = '#e94560';
+        Logger.log('PLAYER', `${players[currentPlayerIndex].name} skrev ogiltigt värde`);
         return;
     }
 
@@ -152,6 +164,8 @@ function submitGuess() {
     }
 
     players[currentPlayerIndex].score += points;
+
+    Logger.log('PLAYER', `${players[currentPlayerIndex].name} gissade ${guess} (rätt: ${q.answer}, diff: ${diff}, +${points}p) | Total: ${players[currentPlayerIndex].score}p`);
 
     document.getElementById('result-text').textContent = message;
     const pointsEl = document.getElementById('result-points');
@@ -196,16 +210,20 @@ function endGame() {
     ).join('');
 
     const winners = sorted.filter(p => p.score === maxScore);
+    let winnerText;
     if (winners.length > 1) {
-        document.getElementById('winner-announcement').textContent =
-            `Oavgjort mellan ${winners.map(w => w.name).join(' och ')}!`;
+        winnerText = `Oavgjort mellan ${winners.map(w => w.name).join(' och ')}!`;
     } else {
-        document.getElementById('winner-announcement').textContent =
-            `${sorted[0].name} vinner!`;
+        winnerText = `${sorted[0].name} vinner!`;
     }
+    document.getElementById('winner-announcement').textContent = winnerText;
+
+    const scoresSummary = sorted.map(p => `${p.name}: ${p.score}p`).join(', ');
+    Logger.log('GAME', `Spel slut! ${winnerText} | Resultat: ${scoresSummary}`);
 }
 
 function resetGame() {
+    Logger.log('GAME', 'Nytt spel startas');
     showScreen('start-screen');
 }
 
