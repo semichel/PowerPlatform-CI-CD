@@ -4,20 +4,23 @@ let players = [];
 let currentPlayerIndex = 0;
 let currentQuestionIndex = 0;
 let gameQuestions = [];
-let timeline = []; // events placed on the timeline
+let timeline = [];
 let selectedCategories = new Set(CATEGORIES);
 const QUESTIONS_PER_PLAYER = 5;
 let waitingForAnswer = false;
+let isOnlineGame = false;
+let myPlayerIndex = -1; // which player am I in online mode
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    renderCategoryButtons();
+    renderCategoryButtons('category-buttons');
     updatePlayerNames();
 });
 
 // Category buttons
-function renderCategoryButtons() {
-    const container = document.getElementById('category-buttons');
+function renderCategoryButtons(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
     container.innerHTML = CATEGORIES.map(cat =>
         `<button class="cat-btn selected" onclick="toggleCategory(this, '${cat}')">${cat}</button>`
     ).join('');
@@ -27,23 +30,21 @@ function toggleCategory(btn, category) {
     btn.classList.toggle('selected');
     if (selectedCategories.has(category)) {
         selectedCategories.delete(category);
-        Logger.log('GAME', `Kategori avvald: ${category}`);
     } else {
         selectedCategories.add(category);
-        Logger.log('GAME', `Kategori vald: ${category}`);
     }
 }
 
-// Player count
+// Player count (local mode)
 function changePlayerCount(delta) {
     playerCount = Math.max(1, Math.min(6, playerCount + delta));
     document.getElementById('player-count-display').textContent = playerCount;
     updatePlayerNames();
-    Logger.log('GAME', `Antal spelare ändrat till ${playerCount}`);
 }
 
 function updatePlayerNames() {
     const container = document.getElementById('player-names');
+    if (!container) return;
     container.innerHTML = '';
     for (let i = 0; i < playerCount; i++) {
         const input = document.createElement('input');
@@ -54,14 +55,23 @@ function updatePlayerNames() {
     }
 }
 
-// Start Game
-function startGame() {
+// Mode selection
+function showLocalSetup() {
+    showScreen('local-setup');
+}
+
+function showOnlineSetup() {
+    showScreen('online-setup');
+}
+
+// Start Local Game
+function startLocalGame() {
     if (selectedCategories.size === 0) {
-        Logger.log('GAME', 'Försökte starta utan kategorier');
         alert('Välj minst en kategori!');
         return;
     }
 
+    isOnlineGame = false;
     players = [];
     for (let i = 0; i < playerCount; i++) {
         const nameInput = document.getElementById(`player-name-${i}`);
@@ -69,16 +79,23 @@ function startGame() {
         players.push({ name, score: 0 });
     }
 
-    const filtered = QUESTIONS.filter(q => selectedCategories.has(q.category));
-    gameQuestions = shuffleArray(filtered).slice(0, playerCount * QUESTIONS_PER_PLAYER + 1);
+    prepareAndStartGame();
+}
+
+// Called by both local and online to set up questions and start
+function prepareAndStartGame(providedQuestions) {
+    if (providedQuestions) {
+        gameQuestions = providedQuestions;
+    } else {
+        const filtered = QUESTIONS.filter(q => selectedCategories.has(q.category));
+        gameQuestions = shuffleArray(filtered).slice(0, players.length * QUESTIONS_PER_PLAYER + 1);
+    }
 
     if (gameQuestions.length < 2) {
-        Logger.log('ERROR', 'För få frågor');
         alert('Inte tillräckligt med frågor!');
         return;
     }
 
-    // Place the first event on the timeline automatically
     const firstEvent = gameQuestions.shift();
     timeline = [firstEvent];
 
@@ -86,10 +103,8 @@ function startGame() {
     currentQuestionIndex = 0;
     waitingForAnswer = false;
 
-    const cats = [...selectedCategories].join(', ');
     const playerNames = players.map(p => p.name).join(', ');
-    Logger.log('GAME', `Spel startat! Spelare: ${playerNames} | Kategorier: ${cats} | ${gameQuestions.length} frågor`);
-    Logger.log('GAME', `Första händelse på tidslinjen: "${firstEvent.question}" (${firstEvent.answer})`);
+    Logger.log('GAME', `Spel startat! Spelare: ${playerNames} | ${gameQuestions.length} frågor`);
 
     showScreen('game-screen');
     showQuestion();
@@ -110,26 +125,35 @@ function showQuestion() {
     document.getElementById('card-question').textContent = q.question;
     document.getElementById('card-hint').textContent = q.hint ? `Ledtråd: ${q.hint}` : '';
 
-    Logger.log('GAME', `Fråga ${currentQuestionIndex + 1}: "${q.question}" [${q.category}] (svar: ${q.answer})`);
-
     updateScoreboard();
     renderTimeline();
     document.getElementById('result-area').classList.add('hidden');
-    waitingForAnswer = true;
+
+    // Online mode: show/hide controls based on whose turn it is
+    const waitingOverlay = document.getElementById('waiting-overlay');
+    if (isOnlineGame && myPlayerIndex !== currentPlayerIndex) {
+        waitingOverlay.classList.remove('hidden');
+        document.getElementById('waiting-for-player').textContent = players[currentPlayerIndex].name;
+        waitingForAnswer = false;
+    } else {
+        waitingOverlay.classList.add('hidden');
+        waitingForAnswer = true;
+    }
 }
 
 function renderTimeline() {
     const container = document.getElementById('timeline');
     container.innerHTML = '';
 
-    // Sort timeline by year
     const sorted = [...timeline].sort((a, b) => a.answer - b.answer);
+    const canInteract = !isOnlineGame || myPlayerIndex === currentPlayerIndex;
 
-    // Add "Före" button before the first event
-    const beforeFirst = createSlotButton(0, sorted.length > 0 ? sorted[0].answer : null, 'before');
-    container.appendChild(beforeFirst);
+    // "Före" button
+    if (canInteract && waitingForAnswer) {
+        const beforeFirst = createSlotButton(0, sorted[0] ? sorted[0].answer : null, 'before');
+        container.appendChild(beforeFirst);
+    }
 
-    // Add each event on the timeline with slot buttons between them
     sorted.forEach((event, i) => {
         const eventEl = document.createElement('div');
         eventEl.className = 'timeline-event';
@@ -139,9 +163,10 @@ function renderTimeline() {
         `;
         container.appendChild(eventEl);
 
-        // Add slot button after each event
-        const afterBtn = createSlotButton(i + 1, sorted[i + 1] ? sorted[i + 1].answer : null, 'after', sorted[i].answer);
-        container.appendChild(afterBtn);
+        if (canInteract && waitingForAnswer) {
+            const afterBtn = createSlotButton(i + 1, sorted[i + 1] ? sorted[i + 1].answer : null, 'after', sorted[i].answer);
+            container.appendChild(afterBtn);
+        }
     });
 }
 
@@ -150,7 +175,8 @@ function createSlotButton(index, nextYear, position, prevYear) {
     btn.className = 'timeline-slot';
 
     if (position === 'before') {
-        btn.innerHTML = `<span class="slot-arrow">&uarr;</span> Före ${timeline.length > 0 ? timeline.sort((a,b) => a.answer - b.answer)[0].answer : ''}`;
+        const firstYear = [...timeline].sort((a,b) => a.answer - b.answer)[0];
+        btn.innerHTML = `<span class="slot-arrow">&uarr;</span> Före ${firstYear ? firstYear.answer : ''}`;
     } else if (nextYear) {
         btn.innerHTML = `<span class="slot-arrow">&updownarrow;</span> Mellan`;
     } else {
@@ -165,33 +191,40 @@ function placeEvent(slotIndex) {
     if (!waitingForAnswer) return;
     waitingForAnswer = false;
 
+    // In online mode, send choice to host
+    if (isOnlineGame && typeof onlinePlaceEvent === 'function') {
+        onlinePlaceEvent(slotIndex);
+        return;
+    }
+
+    processPlacement(slotIndex);
+}
+
+function processPlacement(slotIndex) {
     const q = gameQuestions[currentQuestionIndex];
     const sorted = [...timeline].sort((a, b) => a.answer - b.answer);
 
-    // Check if placement is correct
     let correct = false;
     const year = q.answer;
 
     if (slotIndex === 0) {
-        // Placed before everything
         correct = year <= sorted[0].answer;
     } else if (slotIndex >= sorted.length) {
-        // Placed after everything
         correct = year >= sorted[sorted.length - 1].answer;
     } else {
-        // Placed between two events
         correct = year >= sorted[slotIndex - 1].answer && year <= sorted[slotIndex].answer;
     }
 
     let points = correct ? 2 : 0;
     players[currentPlayerIndex].score += points;
-
-    // Add to timeline regardless
     timeline.push(q);
 
-    Logger.log('PLAYER', `${players[currentPlayerIndex].name} placerade "${q.question}" (${q.answer}) ${correct ? 'RÄTT' : 'FEL'} | +${points}p | Total: ${players[currentPlayerIndex].score}p`);
+    Logger.log('PLAYER', `${players[currentPlayerIndex].name} placerade "${q.question}" (${q.answer}) ${correct ? 'RÄTT' : 'FEL'} | +${points}p`);
 
-    // Show result
+    showResult(q, correct, points);
+}
+
+function showResult(q, correct, points) {
     const resultArea = document.getElementById('result-area');
     const resultText = document.getElementById('result-text');
     const resultPoints = document.getElementById('result-points');
@@ -206,14 +239,30 @@ function placeEvent(slotIndex) {
         resultPoints.className = 'points-far';
     }
 
+    // Hide waiting overlay
+    document.getElementById('waiting-overlay').classList.add('hidden');
+
+    // In online mode, only host can advance
+    const nextBtn = document.getElementById('next-btn');
+    if (isOnlineGame && !isHost) {
+        nextBtn.classList.add('hidden');
+    } else {
+        nextBtn.classList.remove('hidden');
+    }
+
     resultArea.classList.remove('hidden');
-    renderTimeline(); // Re-render with new event
+    renderTimeline();
     updateScoreboard();
 }
 
 function nextTurn() {
     currentQuestionIndex++;
     currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+
+    if (isOnlineGame && typeof onlineNextTurn === 'function') {
+        onlineNextTurn();
+        return;
+    }
 
     if (currentQuestionIndex >= gameQuestions.length) {
         endGame();
@@ -255,14 +304,14 @@ function endGame() {
         winnerText = `${sorted[0].name} vinner!`;
     }
     document.getElementById('winner-announcement').textContent = winnerText;
-
-    const scoresSummary = sorted.map(p => `${p.name}: ${p.score}p`).join(', ');
-    Logger.log('GAME', `Spel slut! ${winnerText} | Resultat: ${scoresSummary}`);
+    Logger.log('GAME', `Spel slut! ${winnerText}`);
 }
 
 function resetGame() {
-    Logger.log('GAME', 'Nytt spel startas');
+    Logger.log('GAME', 'Tillbaka till start');
     timeline = [];
+    isOnlineGame = false;
+    if (typeof cleanupOnline === 'function') cleanupOnline();
     showScreen('start-screen');
 }
 

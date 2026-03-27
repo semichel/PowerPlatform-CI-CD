@@ -482,6 +482,247 @@ body {
     font-weight: bold;
 }
 
+/* Mode Select */
+.mode-select {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.btn-mode {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    padding: 20px 16px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    -webkit-appearance: none;
+}
+
+.btn-mode:active {
+    border-color: #e94560;
+    background: rgba(233, 69, 96, 0.1);
+    transform: scale(0.97);
+}
+
+.mode-icon {
+    font-size: 2rem;
+}
+
+.mode-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f0f0f5;
+}
+
+.mode-desc {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.screen-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #e94560;
+    text-align: center;
+    margin-bottom: 16px;
+    padding-top: 20px;
+}
+
+.btn-secondary {
+    width: 100%;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    color: #a0a0b8;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 10px;
+    -webkit-appearance: none;
+}
+
+.btn-secondary:active {
+    border-color: #e94560;
+    color: #e94560;
+}
+
+/* Online Setup */
+.online-name-input {
+    margin-bottom: 16px;
+}
+
+.online-name-input label {
+    display: block;
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+    color: #c0c0d8;
+    font-weight: 600;
+}
+
+.online-name-input input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.online-name-input input:focus {
+    border-color: #e94560;
+}
+
+.online-buttons {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.join-input {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.join-input.hidden {
+    display: none;
+}
+
+.join-input input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: white;
+    font-size: 1.2rem;
+    text-align: center;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.join-input input:focus {
+    border-color: #e94560;
+}
+
+/* Lobby */
+.room-code-display {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: rgba(233, 69, 96, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(233, 69, 96, 0.3);
+}
+
+.room-code-label {
+    font-size: 0.85rem;
+    color: #a0a0b8;
+    margin-bottom: 6px;
+}
+
+.room-code {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #e94560;
+    letter-spacing: 8px;
+    margin-bottom: 10px;
+}
+
+.btn-small {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #c0c0d8;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+
+.btn-small:active {
+    background: rgba(233, 69, 96, 0.2);
+    color: white;
+}
+
+.lobby-players {
+    margin-bottom: 16px;
+}
+
+.lobby-players label {
+    display: block;
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+    color: #c0c0d8;
+    font-weight: 600;
+}
+
+.lobby-player {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lobby-player-name {
+    font-size: 1rem;
+    color: #f0f0f5;
+}
+
+.lobby-host-badge {
+    background: rgba(233, 69, 96, 0.2);
+    color: #e94560;
+    padding: 2px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.lobby-status {
+    text-align: center;
+    color: #a0a0b8;
+    font-size: 0.95rem;
+    margin-bottom: 16px;
+}
+
+.waiting-text {
+    text-align: center;
+    color: #a0a0b8;
+    font-size: 1rem;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Waiting overlay in game */
+.waiting-overlay {
+    text-align: center;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 16px;
+}
+
+.waiting-overlay.hidden {
+    display: none;
+}
+
 /* Log Panel */
 #log-toggle {
     position: fixed;
