@@ -6,10 +6,11 @@ let currentQuestionIndex = 0;
 let gameQuestions = [];
 let timeline = [];
 let selectedCategories = new Set(CATEGORIES);
-const QUESTIONS_PER_PLAYER = 5;
+const QUESTIONS_PER_PLAYER = 10;
 let waitingForAnswer = false;
 let isOnlineGame = false;
-let myPlayerIndex = -1; // which player am I in online mode
+let myPlayerIndex = -1;
+let roundPoints = 0; // points accumulated this round (before "stanna")
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -102,6 +103,7 @@ function prepareAndStartGame(providedQuestions) {
     currentPlayerIndex = 0;
     currentQuestionIndex = 0;
     waitingForAnswer = false;
+    roundPoints = 0;
 
     const playerNames = players.map(p => p.name).join(', ');
     Logger.log('GAME', `Spel startat! Spelare: ${playerNames} | ${gameQuestions.length} frågor`);
@@ -112,6 +114,12 @@ function prepareAndStartGame(providedQuestions) {
 
 function showQuestion() {
     if (currentQuestionIndex >= gameQuestions.length) {
+        // Auto-bank remaining round points
+        if (roundPoints > 0) {
+            players[currentPlayerIndex].score += roundPoints;
+            Logger.log('PLAYER', `${players[currentPlayerIndex].name} fick ${roundPoints}p (inga fler frågor)`);
+            roundPoints = 0;
+        }
         endGame();
         return;
     }
@@ -124,6 +132,15 @@ function showQuestion() {
     document.getElementById('card-category').textContent = q.category;
     document.getElementById('card-question').textContent = q.question;
     document.getElementById('card-hint').textContent = q.hint ? `Ledtråd: ${q.hint}` : '';
+
+    // Show round points info
+    const roundInfo = document.getElementById('round-points');
+    if (roundPoints > 0) {
+        roundInfo.textContent = `${players[currentPlayerIndex].name} riskerar ${roundPoints}p`;
+        roundInfo.classList.remove('hidden');
+    } else {
+        roundInfo.classList.add('hidden');
+    }
 
     updateScoreboard();
     document.getElementById('result-area').classList.add('hidden');
@@ -217,39 +234,58 @@ function processPlacement(slotIndex) {
         correct = year >= sorted[slotIndex - 1].answer && year <= sorted[slotIndex].answer;
     }
 
-    let points = correct ? 2 : 0;
-    players[currentPlayerIndex].score += points;
     timeline.push(q);
 
-    Logger.log('PLAYER', `${players[currentPlayerIndex].name} placerade "${q.question}" (${q.answer}) ${correct ? 'RÄTT' : 'FEL'} | +${points}p`);
+    if (correct) {
+        roundPoints += 2;
+        Logger.log('PLAYER', `${players[currentPlayerIndex].name} RÄTT "${q.question}" (${q.answer}) | Riskerar: ${roundPoints}p`);
+    } else {
+        Logger.log('PLAYER', `${players[currentPlayerIndex].name} FEL "${q.question}" (${q.answer}) | Förlorade ${roundPoints}p`);
+        roundPoints = 0;
+    }
 
-    showResult(q, correct, points);
+    showResult(q, correct);
 }
 
-function showResult(q, correct, points) {
+function showResult(q, correct) {
     const resultArea = document.getElementById('result-area');
     const resultText = document.getElementById('result-text');
     const resultPoints = document.getElementById('result-points');
+    const continueBtn = document.getElementById('continue-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    document.getElementById('waiting-overlay').classList.add('hidden');
 
     if (correct) {
         resultText.textContent = `Rätt! "${q.question}" hände ${q.answer}.`;
-        resultPoints.textContent = '+2 poäng';
+        resultPoints.textContent = `${roundPoints}p på spel`;
         resultPoints.className = 'points-perfect';
-    } else {
-        resultText.textContent = `Fel! "${q.question}" hände ${q.answer}.`;
-        resultPoints.textContent = 'Inga poäng';
-        resultPoints.className = 'points-far';
-    }
 
-    // Hide waiting overlay
-    document.getElementById('waiting-overlay').classList.add('hidden');
-
-    // In online mode, only host can advance
-    const nextBtn = document.getElementById('next-btn');
-    if (isOnlineGame && !isHost) {
+        // Show "Fortsätt" and "Stanna" buttons
+        const canControl = !isOnlineGame || isHost || myPlayerIndex === currentPlayerIndex;
+        if (canControl) {
+            continueBtn.classList.remove('hidden');
+            stopBtn.classList.remove('hidden');
+        } else {
+            continueBtn.classList.add('hidden');
+            stopBtn.classList.add('hidden');
+        }
         nextBtn.classList.add('hidden');
     } else {
-        nextBtn.classList.remove('hidden');
+        resultText.textContent = `Fel! "${q.question}" hände ${q.answer}. Du förlorade alla poäng från rundan!`;
+        resultPoints.textContent = '0 poäng';
+        resultPoints.className = 'points-far';
+
+        // Only show "Nästa" (go to next player)
+        continueBtn.classList.add('hidden');
+        stopBtn.classList.add('hidden');
+
+        if (isOnlineGame && !isHost) {
+            nextBtn.classList.add('hidden');
+        } else {
+            nextBtn.classList.remove('hidden');
+        }
     }
 
     resultArea.classList.remove('hidden');
@@ -257,14 +293,57 @@ function showResult(q, correct, points) {
     updateScoreboard();
 }
 
-function nextTurn() {
+// Player chooses to continue (risk more)
+function continueRound() {
     currentQuestionIndex++;
-    currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+
+    if (isOnlineGame && typeof onlineContinueRound === 'function') {
+        onlineContinueRound();
+        return;
+    }
+
+    if (currentQuestionIndex >= gameQuestions.length) {
+        // No more questions - auto bank
+        players[currentPlayerIndex].score += roundPoints;
+        Logger.log('PLAYER', `${players[currentPlayerIndex].name} stannade (inga fler frågor) +${roundPoints}p`);
+        roundPoints = 0;
+        endGame();
+        return;
+    }
+
+    showQuestion();
+}
+
+// Player chooses to stop (bank points, next player)
+function stopRound() {
+    players[currentPlayerIndex].score += roundPoints;
+    Logger.log('PLAYER', `${players[currentPlayerIndex].name} stannade! +${roundPoints}p | Total: ${players[currentPlayerIndex].score}p`);
+    roundPoints = 0;
+
+    if (isOnlineGame && typeof onlineStopRound === 'function') {
+        onlineStopRound();
+        return;
+    }
+
+    goToNextPlayer();
+}
+
+// Wrong answer → next player
+function nextTurn() {
+    roundPoints = 0;
 
     if (isOnlineGame && typeof onlineNextTurn === 'function') {
         onlineNextTurn();
         return;
     }
+
+    goToNextPlayer();
+}
+
+function goToNextPlayer() {
+    currentQuestionIndex++;
+    currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+    roundPoints = 0;
 
     if (currentQuestionIndex >= gameQuestions.length) {
         endGame();
@@ -313,6 +392,7 @@ function resetGame() {
     Logger.log('GAME', 'Tillbaka till start');
     timeline = [];
     isOnlineGame = false;
+    roundPoints = 0;
     if (typeof cleanupOnline === 'function') cleanupOnline();
     showScreen('start-screen');
 }

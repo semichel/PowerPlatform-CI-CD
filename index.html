@@ -59,18 +59,8 @@
                     <label>Ditt namn:</label>
                     <input type="text" id="online-player-name" placeholder="Skriv ditt namn...">
                 </div>
-                <div class="online-buttons">
-                    <button class="btn-mode" onclick="createRoom()">
-                        <span class="mode-icon">&#x2795;</span>
-                        <span class="mode-title">Skapa rum</span>
-                        <span class="mode-desc">Du blir värd</span>
-                    </button>
-                    <button class="btn-mode" onclick="showJoinRoom()">
-                        <span class="mode-icon">&#x1F517;</span>
-                        <span class="mode-title">Gå med</span>
-                        <span class="mode-desc">Ange rumskod</span>
-                    </button>
-                </div>
+                <button class="btn-primary btn-full" onclick="createRoom()">Skapa rum</button>
+                <button class="btn-secondary btn-full" onclick="showJoinRoom()">Gå med i rum</button>
                 <div id="join-input" class="join-input hidden">
                     <input type="text" id="room-code-input" placeholder="Ange rumskod..." maxlength="6" autocapitalize="characters">
                     <button class="btn-primary" onclick="joinRoom()">Anslut</button>
@@ -114,6 +104,7 @@
                 <div class="current-player">Det är <span id="player-turn"></span>s tur</div>
             </div>
             <div class="scoreboard" id="scoreboard"></div>
+            <div id="round-points" class="round-points hidden"></div>
 
             <div class="new-card">
                 <div class="new-card-label">Placera denna händelse:</div>
@@ -134,7 +125,11 @@
             <div id="result-area" class="result-area hidden">
                 <div id="result-text"></div>
                 <div id="result-points"></div>
-                <button class="btn-primary" id="next-btn" onclick="nextTurn()">Nästa</button>
+                <div class="result-buttons">
+                    <button class="btn-continue hidden" id="continue-btn" onclick="continueRound()">Fortsätt</button>
+                    <button class="btn-stop hidden" id="stop-btn" onclick="stopRound()">Stanna</button>
+                    <button class="btn-primary hidden" id="next-btn" onclick="nextTurn()">Nästa spelare</button>
+                </div>
             </div>
         </div>
 
