@@ -6,11 +6,24 @@ let isHost = false;
 let roomCode = '';
 let lobbyPlayers = []; // { name, peerId }
 let myName = '';
+let connectionTimeout = null;
+
+const PEER_CONFIG = {
+    debug: 1,
+    config: {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun.services.mozilla.com' }
+        ]
+    }
+};
 
 function generateRoomCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 4; i++) {
         code += chars[Math.floor(Math.random() * chars.length)];
     }
     return code;
@@ -21,42 +34,101 @@ function getMyName() {
     return input.value.trim() || 'Spelare';
 }
 
+function setStatus(msg) {
+    const el = document.getElementById('lobby-status');
+    if (el) el.textContent = msg;
+    Logger.log('GAME', msg);
+}
+
 // HOST: Create a room
 function createRoom() {
     myName = getMyName();
+    if (!myName) {
+        alert('Skriv ditt namn först!');
+        return;
+    }
+
     roomCode = generateRoomCode();
     isHost = true;
     isOnlineGame = true;
 
-    Logger.log('GAME', `Skapar rum: ${roomCode}`);
+    // Show lobby immediately with "connecting" status
+    lobbyPlayers = [{ name: myName, peerId: '' }];
+    showLobby();
+    setStatus('Ansluter till server...');
 
-    const peerId = 'narDa-' + roomCode;
-    peer = new Peer(peerId);
+    const peerId = 'narDa' + roomCode;
+    peer = new Peer(peerId, PEER_CONFIG);
 
-    peer.on('open', () => {
-        Logger.log('GAME', `Ansluten som värd: ${peerId}`);
-        lobbyPlayers = [{ name: myName, peerId: peer.id }];
-        showLobby();
+    connectionTimeout = setTimeout(() => {
+        if (!peer || peer.disconnected) {
+            setStatus('Kunde inte ansluta. Försök igen.');
+            Logger.log('ERROR', 'Timeout vid anslutning till PeerJS-server');
+        }
+    }, 10000);
+
+    peer.on('open', (id) => {
+        clearTimeout(connectionTimeout);
+        Logger.log('GAME', `Värd ansluten med ID: ${id}`);
+        lobbyPlayers[0].peerId = id;
+        setStatus('Rum skapat! Dela koden med dina vänner.');
     });
 
     peer.on('connection', (conn) => {
+        Logger.log('GAME', `Ny anslutning från: ${conn.peer}`);
+        connections.push(conn);
+
         conn.on('open', () => {
+            Logger.log('GAME', `Anslutning öppnad: ${conn.peer}`);
             conn.on('data', (data) => handleHostMessage(conn, data));
         });
+
         conn.on('close', () => {
             connections = connections.filter(c => c !== conn);
             lobbyPlayers = lobbyPlayers.filter(p => p.peerId !== conn.peer);
             updateLobbyUI();
-            Logger.log('GAME', `Spelare lämnade`);
+            setStatus('En spelare lämnade rummet.');
         });
-        connections.push(conn);
+
+        conn.on('error', (err) => {
+            Logger.log('ERROR', `Anslutningsfel med gäst: ${err}`);
+        });
+    });
+
+    peer.on('disconnected', () => {
+        Logger.log('ERROR', 'Tappade anslutning till server, försöker igen...');
+        setStatus('Tappade anslutning, försöker igen...');
+        peer.reconnect();
     });
 
     peer.on('error', (err) => {
+        clearTimeout(connectionTimeout);
         Logger.log('ERROR', `PeerJS: ${err.type}: ${err.message}`);
         if (err.type === 'unavailable-id') {
-            alert('Rumskoden används redan. Försök igen.');
-            showScreen('online-setup');
+            // Try a new code
+            roomCode = generateRoomCode();
+            setStatus('Koden var upptagen, försöker med ny kod...');
+            document.getElementById('room-code').textContent = roomCode;
+            peer.destroy();
+            const newPeerId = 'narDa' + roomCode;
+            peer = new Peer(newPeerId, PEER_CONFIG);
+            peer.on('open', () => {
+                lobbyPlayers[0].peerId = peer.id;
+                setStatus('Rum skapat! Dela koden med dina vänner.');
+            });
+            peer.on('connection', (conn) => {
+                connections.push(conn);
+                conn.on('open', () => {
+                    conn.on('data', (data) => handleHostMessage(conn, data));
+                });
+                conn.on('close', () => {
+                    connections = connections.filter(c => c !== conn);
+                    lobbyPlayers = lobbyPlayers.filter(p => p.peerId !== conn.peer);
+                    updateLobbyUI();
+                });
+            });
+        } else if (err.type === 'network' || err.type === 'server-error') {
+            setStatus('Serverfel. Kontrollera din internetanslutning.');
         }
     });
 }
@@ -69,6 +141,11 @@ function showJoinRoom() {
 
 function joinRoom() {
     myName = getMyName();
+    if (!myName) {
+        alert('Skriv ditt namn först!');
+        return;
+    }
+
     const code = document.getElementById('room-code-input').value.trim().toUpperCase();
     if (!code) {
         alert('Ange en rumskod!');
@@ -79,16 +156,29 @@ function joinRoom() {
     isHost = false;
     isOnlineGame = true;
 
-    Logger.log('GAME', `Ansluter till rum: ${roomCode}`);
+    // Show lobby with connecting status
+    lobbyPlayers = [{ name: myName, peerId: '' }];
+    showLobby();
+    setStatus('Ansluter till rum ' + roomCode + '...');
 
-    peer = new Peer();
+    peer = new Peer(PEER_CONFIG);
+
+    connectionTimeout = setTimeout(() => {
+        setStatus('Anslutningen tog för lång tid. Kolla rumskoden och försök igen.');
+        Logger.log('ERROR', 'Timeout vid anslutning');
+    }, 15000);
 
     peer.on('open', () => {
-        const hostId = 'narDa-' + roomCode;
-        hostConnection = peer.connect(hostId, { reliable: true });
+        Logger.log('GAME', `Gäst ansluten med ID: ${peer.id}`);
+        setStatus('Ansluter till rum ' + roomCode + '...');
+
+        const hostId = 'narDa' + roomCode;
+        hostConnection = peer.connect(hostId, { reliable: true, serialization: 'json' });
 
         hostConnection.on('open', () => {
+            clearTimeout(connectionTimeout);
             Logger.log('GAME', 'Ansluten till värd!');
+            setStatus('Ansluten! Väntar på att värden startar...');
             hostConnection.send({ type: 'join', name: myName, peerId: peer.id });
         });
 
@@ -96,21 +186,35 @@ function joinRoom() {
 
         hostConnection.on('close', () => {
             Logger.log('ERROR', 'Anslutningen till värden bröts');
+            setStatus('Anslutningen till värden bröts.');
             alert('Anslutningen till värden bröts.');
             resetGame();
         });
 
         hostConnection.on('error', (err) => {
+            clearTimeout(connectionTimeout);
             Logger.log('ERROR', `Anslutningsfel: ${err}`);
+            setStatus('Kunde inte ansluta. Kolla koden och försök igen.');
         });
     });
 
     peer.on('error', (err) => {
+        clearTimeout(connectionTimeout);
         Logger.log('ERROR', `PeerJS: ${err.type}: ${err.message}`);
         if (err.type === 'peer-unavailable') {
-            alert('Kunde inte hitta rummet. Kolla koden och försök igen.');
-            showScreen('online-setup');
+            setStatus('Kunde inte hitta rummet. Kolla koden.');
+            alert('Rummet "' + roomCode + '" hittades inte. Kolla att koden stämmer och att värden fortfarande är inne.');
+        } else if (err.type === 'network' || err.type === 'server-error') {
+            setStatus('Nätverksfel. Kontrollera din internetanslutning.');
+        } else {
+            setStatus('Fel: ' + err.type);
         }
+    });
+
+    peer.on('disconnected', () => {
+        Logger.log('ERROR', 'Tappade anslutning, försöker igen...');
+        setStatus('Tappade anslutning, försöker igen...');
+        peer.reconnect();
     });
 }
 
@@ -137,12 +241,17 @@ function updateLobbyUI() {
     list.innerHTML = lobbyPlayers.map((p, i) =>
         `<div class="lobby-player">
             <span class="lobby-player-name">${p.name}</span>
-            ${i === 0 ? '<span class="lobby-host-badge">Värd</span>' : ''}
+            ${i === 0 && isHost ? '<span class="lobby-host-badge">Värd</span>' : ''}
         </div>`
     ).join('');
 
-    document.getElementById('lobby-status').textContent =
-        `${lobbyPlayers.length} spelare i rummet`;
+    if (lobbyPlayers.length > 0) {
+        const statusEl = document.getElementById('lobby-status');
+        // Don't overwrite connection status messages
+        if (!statusEl.textContent.includes('Ansluter')) {
+            statusEl.textContent = `${lobbyPlayers.length} spelare i rummet`;
+        }
+    }
 
     // Broadcast lobby update to all guests
     if (isHost) {
@@ -152,19 +261,27 @@ function updateLobbyUI() {
 
 function copyRoomCode() {
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(roomCode);
+        navigator.clipboard.writeText(roomCode).catch(() => {
+            fallbackCopy(roomCode);
+        });
     } else {
-        // Fallback for older browsers
-        const input = document.createElement('input');
-        input.value = roomCode;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
+        fallbackCopy(roomCode);
     }
     const btn = document.querySelector('.btn-small');
     btn.textContent = 'Kopierad!';
     setTimeout(() => { btn.textContent = 'Kopiera'; }, 1500);
+}
+
+function fallbackCopy(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
 }
 
 function leaveLobby() {
@@ -179,15 +296,14 @@ function handleHostMessage(conn, data) {
     switch (data.type) {
         case 'join':
             lobbyPlayers.push({ name: data.name, peerId: data.peerId });
+            setStatus(`${data.name} anslöt! ${lobbyPlayers.length} spelare i rummet.`);
             updateLobbyUI();
             // Send lobby state to the new player
             conn.send({ type: 'lobby-update', players: lobbyPlayers });
             break;
 
         case 'place-event':
-            // A guest placed an event - process it
             processPlacement(data.slotIndex);
-            // Broadcast result to all
             broadcastToGuests({
                 type: 'placement-result',
                 slotIndex: data.slotIndex,
@@ -207,6 +323,7 @@ function handleGuestMessage(data) {
     switch (data.type) {
         case 'lobby-update':
             lobbyPlayers = data.players;
+            setStatus(`${lobbyPlayers.length} spelare i rummet`);
             updateLobbyUI();
             break;
 
@@ -217,7 +334,6 @@ function handleGuestMessage(data) {
             isOnlineGame = true;
             Logger.log('GAME', `Jag är spelare ${myPlayerIndex}: ${players[myPlayerIndex].name}`);
             prepareAndStartGame(data.questions);
-            // Override timeline with host's
             timeline = data.timeline;
             showQuestion();
             break;
@@ -227,9 +343,6 @@ function handleGuestMessage(data) {
             timeline = data.timeline;
             currentQuestionIndex = data.currentQuestionIndex;
             currentPlayerIndex = data.currentPlayerIndex;
-            const q = gameQuestions[currentQuestionIndex];
-            const sorted = [...data.timeline].sort((a, b) => a.answer - b.answer);
-            // Determine if correct
             const lastAdded = data.timeline[data.timeline.length - 1];
             const slotIdx = data.slotIndex;
             let correct = false;
@@ -268,35 +381,33 @@ function startOnlineGame() {
         return;
     }
 
-    // Set up players
     players = lobbyPlayers.map(p => ({ name: p.name, score: 0 }));
-    myPlayerIndex = 0; // Host is always player 0
+    myPlayerIndex = 0;
 
     const filtered = QUESTIONS.filter(q => selectedCategories.has(q.category));
     const allQuestions = shuffleArray(filtered).slice(0, players.length * QUESTIONS_PER_PLAYER + 1);
 
     isOnlineGame = true;
 
-    // Send game start to each guest with their player index
-    connections.forEach((conn, i) => {
+    connections.forEach((conn) => {
         const guestIndex = lobbyPlayers.findIndex(p => p.peerId === conn.peer);
-        conn.send({
-            type: 'game-start',
-            players: players,
-            yourIndex: guestIndex,
-            questions: allQuestions,
-            timeline: [allQuestions[0]]
-        });
+        if (conn.open) {
+            conn.send({
+                type: 'game-start',
+                players: players,
+                yourIndex: guestIndex,
+                questions: allQuestions,
+                timeline: [allQuestions[0]]
+            });
+        }
     });
 
-    // Start locally
     prepareAndStartGame(allQuestions);
 }
 
 // Online game actions
 function onlinePlaceEvent(slotIndex) {
     if (isHost) {
-        // Host placed - process directly
         processPlacement(slotIndex);
         broadcastToGuests({
             type: 'placement-result',
@@ -307,8 +418,12 @@ function onlinePlaceEvent(slotIndex) {
             currentPlayerIndex: currentPlayerIndex
         });
     } else {
-        // Guest - send to host
-        hostConnection.send({ type: 'place-event', slotIndex: slotIndex });
+        if (hostConnection && hostConnection.open) {
+            hostConnection.send({ type: 'place-event', slotIndex: slotIndex });
+        } else {
+            Logger.log('ERROR', 'Inte ansluten till värd');
+            alert('Tappade anslutningen till värden.');
+        }
     }
 }
 
@@ -343,6 +458,7 @@ function broadcastToGuests(data) {
 }
 
 function cleanupOnline() {
+    clearTimeout(connectionTimeout);
     if (peer) {
         peer.destroy();
         peer = null;
