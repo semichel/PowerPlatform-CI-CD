@@ -308,9 +308,9 @@ function handleHostMessage(conn, data) {
                 type: 'placement-result',
                 slotIndex: data.slotIndex,
                 players: players,
-                timeline: timeline,
+                playerTimelines: playerTimelines,
                 roundPoints: roundPoints,
-                currentQuestionIndex: currentQuestionIndex,
+                playerQuestionIndex: playerQuestionIndex,
                 currentPlayerIndex: currentPlayerIndex
             });
             break;
@@ -339,24 +339,27 @@ function handleGuestMessage(data) {
         case 'game-start':
             players = data.players;
             myPlayerIndex = data.yourIndex;
-            gameQuestions = data.questions;
+            playerQuestions = data.playerQuestions;
+            playerTimelines = data.playerTimelines;
             isOnlineGame = true;
             Logger.log('GAME', `Jag är spelare ${myPlayerIndex}: ${players[myPlayerIndex].name}`);
-            prepareAndStartGame(data.questions);
-            timeline = data.timeline;
+            prepareAndStartGame(data.playerQuestions, data.playerTimelines);
             showQuestion();
             break;
 
         case 'placement-result': {
             players = data.players;
-            timeline = data.timeline;
+            playerTimelines = data.playerTimelines;
             roundPoints = data.roundPoints;
-            currentQuestionIndex = data.currentQuestionIndex;
+            playerQuestionIndex = data.playerQuestionIndex;
             currentPlayerIndex = data.currentPlayerIndex;
-            const lastAdded = data.timeline[data.timeline.length - 1];
+
+            const pi = data.currentPlayerIndex;
+            const timeline = data.playerTimelines[pi];
+            const lastAdded = timeline[timeline.length - 1];
             const slotIdx = data.slotIndex;
             let correct = false;
-            const prevTimeline = data.timeline.slice(0, -1).sort((a, b) => a.answer - b.answer);
+            const prevTimeline = timeline.slice(0, -1).sort((a, b) => a.answer - b.answer);
             if (slotIdx === 0) {
                 correct = lastAdded.answer <= prevTimeline[0].answer;
             } else if (slotIdx >= prevTimeline.length) {
@@ -369,14 +372,14 @@ function handleGuestMessage(data) {
         }
 
         case 'continue':
-            currentQuestionIndex = data.currentQuestionIndex;
+            playerQuestionIndex = data.playerQuestionIndex;
             roundPoints = data.roundPoints;
             showQuestion();
             break;
 
         case 'stop':
             players = data.players;
-            currentQuestionIndex = data.currentQuestionIndex;
+            playerQuestionIndex = data.playerQuestionIndex;
             currentPlayerIndex = data.currentPlayerIndex;
             roundPoints = 0;
             if (data.gameOver) {
@@ -387,7 +390,7 @@ function handleGuestMessage(data) {
             break;
 
         case 'next-turn':
-            currentQuestionIndex = data.currentQuestionIndex;
+            playerQuestionIndex = data.playerQuestionIndex;
             currentPlayerIndex = data.currentPlayerIndex;
             roundPoints = 0;
             if (data.gameOver) {
@@ -412,11 +415,24 @@ function startOnlineGame() {
 
     players = lobbyPlayers.map(p => ({ name: p.name, score: 0 }));
     myPlayerIndex = 0;
-
-    const filtered = QUESTIONS.filter(q => selectedCategories.has(q.category));
-    const allQuestions = shuffleArray(filtered).slice(0, players.length * QUESTIONS_PER_PLAYER + 1);
-
     isOnlineGame = true;
+
+    // Split questions per player (same as local mode logic)
+    const filtered = QUESTIONS.filter(q => selectedCategories.has(q.category));
+    const shuffled = shuffleArray(filtered);
+
+    playerQuestions = [];
+    playerTimelines = [];
+
+    for (let i = 0; i < players.length; i++) {
+        const start = i * (QUESTIONS_PER_PLAYER + 1);
+        const playerCards = shuffled.slice(start, start + QUESTIONS_PER_PLAYER + 1);
+        const starter = playerCards.shift();
+        playerTimelines.push([starter]);
+        playerQuestions.push(playerCards);
+    }
+
+    playerQuestionIndex = players.map(() => 0);
 
     connections.forEach((conn) => {
         const guestIndex = lobbyPlayers.findIndex(p => p.peerId === conn.peer);
@@ -425,13 +441,21 @@ function startOnlineGame() {
                 type: 'game-start',
                 players: players,
                 yourIndex: guestIndex,
-                questions: allQuestions,
-                timeline: [allQuestions[0]]
+                playerQuestions: playerQuestions,
+                playerTimelines: playerTimelines
             });
         }
     });
 
-    prepareAndStartGame(allQuestions);
+    currentPlayerIndex = 0;
+    waitingForAnswer = false;
+    roundPoints = 0;
+
+    const playerNames = players.map(p => p.name).join(', ');
+    Logger.log('GAME', `Spel startat! Spelare: ${playerNames}`);
+
+    showScreen('game-screen');
+    showQuestion();
 }
 
 // Online game actions
@@ -442,9 +466,9 @@ function onlinePlaceEvent(slotIndex) {
             type: 'placement-result',
             slotIndex: slotIndex,
             players: players,
-            timeline: timeline,
+            playerTimelines: playerTimelines,
             roundPoints: roundPoints,
-            currentQuestionIndex: currentQuestionIndex,
+            playerQuestionIndex: playerQuestionIndex,
             currentPlayerIndex: currentPlayerIndex
         });
     } else {
@@ -458,10 +482,10 @@ function onlinePlaceEvent(slotIndex) {
 
 function onlineContinueRound() {
     if (isHost) {
-        currentQuestionIndex++;
+        playerQuestionIndex[currentPlayerIndex]++;
         broadcastToGuests({
             type: 'continue',
-            currentQuestionIndex: currentQuestionIndex,
+            playerQuestionIndex: playerQuestionIndex,
             roundPoints: roundPoints
         });
         showQuestion();
@@ -474,13 +498,20 @@ function onlineStopRound() {
     if (isHost) {
         players[currentPlayerIndex].score += roundPoints;
         roundPoints = 0;
-        currentQuestionIndex++;
-        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
-        const gameOver = currentQuestionIndex >= gameQuestions.length;
+        playerQuestionIndex[currentPlayerIndex]++;
+
+        // Find next player with cards
+        let tried = 0;
+        do {
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            tried++;
+        } while (tried < players.length && playerQuestionIndex[currentPlayerIndex] >= playerQuestions[currentPlayerIndex].length);
+
+        const gameOver = allPlayersDone();
         broadcastToGuests({
             type: 'stop',
             players: players,
-            currentQuestionIndex: currentQuestionIndex,
+            playerQuestionIndex: playerQuestionIndex,
             currentPlayerIndex: currentPlayerIndex,
             gameOver: gameOver
         });
@@ -494,14 +525,20 @@ function onlineNextTurn() {
     if (!isHost) return;
 
     roundPoints = 0;
-    currentQuestionIndex++;
-    currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+    playerQuestionIndex[currentPlayerIndex]++;
 
-    const gameOver = currentQuestionIndex >= gameQuestions.length;
+    // Find next player with cards
+    let tried = 0;
+    do {
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+        tried++;
+    } while (tried < players.length && playerQuestionIndex[currentPlayerIndex] >= playerQuestions[currentPlayerIndex].length);
+
+    const gameOver = allPlayersDone();
 
     broadcastToGuests({
         type: 'next-turn',
-        currentQuestionIndex: currentQuestionIndex,
+        playerQuestionIndex: playerQuestionIndex,
         currentPlayerIndex: currentPlayerIndex,
         gameOver: gameOver
     });

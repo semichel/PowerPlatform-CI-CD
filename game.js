@@ -2,9 +2,9 @@
 let playerCount = 2;
 let players = [];
 let currentPlayerIndex = 0;
-let currentQuestionIndex = 0;
-let gameQuestions = [];
-let timeline = [];
+let playerTimelines = []; // per-player timelines
+let playerQuestions = []; // per-player question decks
+let playerQuestionIndex = []; // per-player current question index
 let selectedCategories = new Set(CATEGORIES);
 const QUESTIONS_PER_PLAYER = 10;
 let waitingForAnswer = false;
@@ -84,51 +84,77 @@ function startLocalGame() {
 }
 
 // Called by both local and online to set up questions and start
-function prepareAndStartGame(providedQuestions) {
-    if (providedQuestions) {
-        gameQuestions = providedQuestions;
+function prepareAndStartGame(providedPlayerQuestions, providedPlayerTimelines) {
+    if (providedPlayerQuestions && providedPlayerTimelines) {
+        // Online guest: receive pre-split data
+        playerQuestions = providedPlayerQuestions;
+        playerTimelines = providedPlayerTimelines;
     } else {
+        // Local or host: split questions among players
         const filtered = QUESTIONS.filter(q => selectedCategories.has(q.category));
-        gameQuestions = shuffleArray(filtered).slice(0, players.length * QUESTIONS_PER_PLAYER + 1);
+        const shuffled = shuffleArray(filtered);
+
+        playerQuestions = [];
+        playerTimelines = [];
+
+        for (let i = 0; i < players.length; i++) {
+            // Each player gets QUESTIONS_PER_PLAYER cards + 1 starter
+            const start = i * (QUESTIONS_PER_PLAYER + 1);
+            const playerCards = shuffled.slice(start, start + QUESTIONS_PER_PLAYER + 1);
+
+            if (playerCards.length < 2) {
+                alert('Inte tillräckligt med frågor för alla spelare!');
+                return;
+            }
+
+            // First card becomes starter on their timeline
+            const starter = playerCards.shift();
+            playerTimelines.push([starter]);
+            playerQuestions.push(playerCards);
+        }
     }
 
-    if (gameQuestions.length < 2) {
-        alert('Inte tillräckligt med frågor!');
-        return;
-    }
-
-    const firstEvent = gameQuestions.shift();
-    timeline = [firstEvent];
-
+    playerQuestionIndex = players.map(() => 0);
     currentPlayerIndex = 0;
-    currentQuestionIndex = 0;
     waitingForAnswer = false;
     roundPoints = 0;
 
     const playerNames = players.map(p => p.name).join(', ');
-    Logger.log('GAME', `Spel startat! Spelare: ${playerNames} | ${gameQuestions.length} frågor`);
+    const totalQ = playerQuestions.reduce((sum, pq) => sum + pq.length, 0);
+    Logger.log('GAME', `Spel startat! Spelare: ${playerNames} | ${totalQ} frågor totalt`);
 
     showScreen('game-screen');
     showQuestion();
 }
 
 function showQuestion() {
-    if (currentQuestionIndex >= gameQuestions.length) {
+    const pi = currentPlayerIndex;
+    const qi = playerQuestionIndex[pi];
+    const myQuestions = playerQuestions[pi];
+
+    if (qi >= myQuestions.length) {
         // Auto-bank remaining round points
         if (roundPoints > 0) {
-            players[currentPlayerIndex].score += roundPoints;
-            Logger.log('PLAYER', `${players[currentPlayerIndex].name} fick ${roundPoints}p (inga fler frågor)`);
+            players[pi].score += roundPoints;
+            Logger.log('PLAYER', `${players[pi].name} fick ${roundPoints}p (inga fler kort)`);
             roundPoints = 0;
         }
-        endGame();
+        // Check if all players are done
+        if (allPlayersDone()) {
+            endGame();
+            return;
+        }
+        // Skip to next player who still has cards
+        goToNextPlayer();
         return;
     }
 
-    document.getElementById('current-question').textContent = currentQuestionIndex + 1;
-    document.getElementById('total-questions').textContent = gameQuestions.length;
-    document.getElementById('player-turn').textContent = players[currentPlayerIndex].name;
+    const totalLeft = myQuestions.length - qi;
+    document.getElementById('current-question').textContent = qi + 1;
+    document.getElementById('total-questions').textContent = myQuestions.length;
+    document.getElementById('player-turn').textContent = players[pi].name;
 
-    const q = gameQuestions[currentQuestionIndex];
+    const q = myQuestions[qi];
     document.getElementById('card-category').textContent = q.category;
     document.getElementById('card-question').textContent = q.question;
     document.getElementById('card-hint').textContent = q.hint ? `Ledtråd: ${q.hint}` : '';
@@ -137,7 +163,7 @@ function showQuestion() {
     const roundInfo = document.getElementById('round-points');
     if (roundInfo) {
         if (roundPoints > 0) {
-            roundInfo.textContent = `${players[currentPlayerIndex].name} riskerar ${roundPoints}p`;
+            roundInfo.textContent = `${players[pi].name} riskerar ${roundPoints}p`;
             roundInfo.classList.remove('hidden');
         } else {
             roundInfo.classList.add('hidden');
@@ -152,7 +178,7 @@ function showQuestion() {
     if (isOnlineGame && myPlayerIndex !== currentPlayerIndex) {
         if (waitingOverlay) waitingOverlay.classList.remove('hidden');
         const wfp = document.getElementById('waiting-for-player');
-        if (wfp) wfp.textContent = players[currentPlayerIndex].name;
+        if (wfp) wfp.textContent = players[pi].name;
         waitingForAnswer = false;
     } else {
         if (waitingOverlay) waitingOverlay.classList.add('hidden');
@@ -162,10 +188,18 @@ function showQuestion() {
     renderTimeline();
 }
 
+function allPlayersDone() {
+    for (let i = 0; i < players.length; i++) {
+        if (playerQuestionIndex[i] < playerQuestions[i].length) return false;
+    }
+    return true;
+}
+
 function renderTimeline() {
     const container = document.getElementById('timeline');
     container.innerHTML = '';
 
+    const timeline = playerTimelines[currentPlayerIndex];
     const sorted = [...timeline].sort((a, b) => a.answer - b.answer);
     const canInteract = !isOnlineGame || myPlayerIndex === currentPlayerIndex;
 
@@ -195,6 +229,8 @@ function createSlotButton(index, nextYear, position, prevYear) {
     const btn = document.createElement('button');
     btn.className = 'timeline-slot';
 
+    const timeline = playerTimelines[currentPlayerIndex];
+
     if (position === 'before') {
         const firstYear = [...timeline].sort((a,b) => a.answer - b.answer)[0];
         btn.innerHTML = `<span class="slot-arrow">&uarr;</span> Före ${firstYear ? firstYear.answer : ''}`;
@@ -222,7 +258,10 @@ function placeEvent(slotIndex) {
 }
 
 function processPlacement(slotIndex) {
-    const q = gameQuestions[currentQuestionIndex];
+    const pi = currentPlayerIndex;
+    const qi = playerQuestionIndex[pi];
+    const q = playerQuestions[pi][qi];
+    const timeline = playerTimelines[pi];
     const sorted = [...timeline].sort((a, b) => a.answer - b.answer);
 
     let correct = false;
@@ -240,9 +279,9 @@ function processPlacement(slotIndex) {
 
     if (correct) {
         roundPoints += 2;
-        Logger.log('PLAYER', `${players[currentPlayerIndex].name} RÄTT "${q.question}" (${q.answer}) | Riskerar: ${roundPoints}p`);
+        Logger.log('PLAYER', `${players[pi].name} RÄTT "${q.question}" (${q.answer}) | Riskerar: ${roundPoints}p`);
     } else {
-        Logger.log('PLAYER', `${players[currentPlayerIndex].name} FEL "${q.question}" (${q.answer}) | Förlorade ${roundPoints}p`);
+        Logger.log('PLAYER', `${players[pi].name} FEL "${q.question}" (${q.answer}) | Förlorade ${roundPoints}p`);
         roundPoints = 0;
     }
 
@@ -290,19 +329,24 @@ function showResult(q, correct) {
 
 // Player chooses to continue (risk more)
 function continueRound() {
-    currentQuestionIndex++;
+    playerQuestionIndex[currentPlayerIndex]++;
 
     if (isOnlineGame && typeof onlineContinueRound === 'function') {
         onlineContinueRound();
         return;
     }
 
-    if (currentQuestionIndex >= gameQuestions.length) {
+    const pi = currentPlayerIndex;
+    if (playerQuestionIndex[pi] >= playerQuestions[pi].length) {
         // No more questions - auto bank
-        players[currentPlayerIndex].score += roundPoints;
-        Logger.log('PLAYER', `${players[currentPlayerIndex].name} stannade (inga fler frågor) +${roundPoints}p`);
+        players[pi].score += roundPoints;
+        Logger.log('PLAYER', `${players[pi].name} stannade (inga fler kort) +${roundPoints}p`);
         roundPoints = 0;
-        endGame();
+        if (allPlayersDone()) {
+            endGame();
+        } else {
+            goToNextPlayer();
+        }
         return;
     }
 
@@ -336,11 +380,17 @@ function nextTurn() {
 }
 
 function goToNextPlayer() {
-    currentQuestionIndex++;
-    currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+    playerQuestionIndex[currentPlayerIndex]++;
     roundPoints = 0;
 
-    if (currentQuestionIndex >= gameQuestions.length) {
+    // Find next player who still has cards
+    let tried = 0;
+    do {
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+        tried++;
+    } while (tried < players.length && playerQuestionIndex[currentPlayerIndex] >= playerQuestions[currentPlayerIndex].length);
+
+    if (allPlayersDone()) {
         endGame();
         return;
     }
@@ -385,7 +435,9 @@ function endGame() {
 
 function resetGame() {
     Logger.log('GAME', 'Tillbaka till start');
-    timeline = [];
+    playerTimelines = [];
+    playerQuestions = [];
+    playerQuestionIndex = [];
     isOnlineGame = false;
     roundPoints = 0;
     if (typeof cleanupOnline === 'function') cleanupOnline();
