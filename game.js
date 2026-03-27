@@ -135,28 +135,30 @@ function showQuestion() {
 
     // Show round points info
     const roundInfo = document.getElementById('round-points');
-    if (roundPoints > 0) {
-        roundInfo.textContent = `${players[currentPlayerIndex].name} riskerar ${roundPoints}p`;
-        roundInfo.classList.remove('hidden');
-    } else {
-        roundInfo.classList.add('hidden');
+    if (roundInfo) {
+        if (roundPoints > 0) {
+            roundInfo.textContent = `${players[currentPlayerIndex].name} riskerar ${roundPoints}p`;
+            roundInfo.classList.remove('hidden');
+        } else {
+            roundInfo.classList.add('hidden');
+        }
     }
 
     updateScoreboard();
     document.getElementById('result-area').classList.add('hidden');
 
-    // Online mode: show/hide controls based on whose turn it is
+    // Set waitingForAnswer BEFORE renderTimeline so slot buttons appear
     const waitingOverlay = document.getElementById('waiting-overlay');
     if (isOnlineGame && myPlayerIndex !== currentPlayerIndex) {
-        waitingOverlay.classList.remove('hidden');
-        document.getElementById('waiting-for-player').textContent = players[currentPlayerIndex].name;
+        if (waitingOverlay) waitingOverlay.classList.remove('hidden');
+        const wfp = document.getElementById('waiting-for-player');
+        if (wfp) wfp.textContent = players[currentPlayerIndex].name;
         waitingForAnswer = false;
     } else {
-        waitingOverlay.classList.add('hidden');
+        if (waitingOverlay) waitingOverlay.classList.add('hidden');
         waitingForAnswer = true;
     }
 
-    // Render timeline AFTER waitingForAnswer is set, so slot buttons appear
     renderTimeline();
 }
 
@@ -255,37 +257,30 @@ function showResult(q, correct) {
     const stopBtn = document.getElementById('stop-btn');
     const nextBtn = document.getElementById('next-btn');
 
-    document.getElementById('waiting-overlay').classList.add('hidden');
+    if (!resultArea || !resultText || !resultPoints) return;
+
+    const wo = document.getElementById('waiting-overlay');
+    if (wo) wo.classList.add('hidden');
 
     if (correct) {
         resultText.textContent = `Rätt! "${q.question}" hände ${q.answer}.`;
         resultPoints.textContent = `${roundPoints}p på spel`;
         resultPoints.className = 'points-perfect';
 
-        // Show "Fortsätt" and "Stanna" buttons
         const canControl = !isOnlineGame || isHost || myPlayerIndex === currentPlayerIndex;
-        if (canControl) {
-            continueBtn.classList.remove('hidden');
-            stopBtn.classList.remove('hidden');
-        } else {
-            continueBtn.classList.add('hidden');
-            stopBtn.classList.add('hidden');
-        }
-        nextBtn.classList.add('hidden');
+        if (continueBtn) continueBtn.classList.toggle('hidden', !canControl);
+        if (stopBtn) stopBtn.classList.toggle('hidden', !canControl);
+        if (nextBtn) nextBtn.classList.add('hidden');
     } else {
         resultText.textContent = `Fel! "${q.question}" hände ${q.answer}. Du förlorade alla poäng från rundan!`;
         resultPoints.textContent = '0 poäng';
         resultPoints.className = 'points-far';
 
-        // Only show "Nästa" (go to next player)
-        continueBtn.classList.add('hidden');
-        stopBtn.classList.add('hidden');
+        if (continueBtn) continueBtn.classList.add('hidden');
+        if (stopBtn) stopBtn.classList.add('hidden');
 
-        if (isOnlineGame && !isHost) {
-            nextBtn.classList.add('hidden');
-        } else {
-            nextBtn.classList.remove('hidden');
-        }
+        const hideNext = isOnlineGame && !isHost;
+        if (nextBtn) nextBtn.classList.toggle('hidden', hideNext);
     }
 
     resultArea.classList.remove('hidden');
