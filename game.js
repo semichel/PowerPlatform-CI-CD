@@ -126,7 +126,6 @@ function showQuestion() {
     document.getElementById('card-hint').textContent = q.hint ? `Ledtråd: ${q.hint}` : '';
 
     updateScoreboard();
-    renderTimeline();
     document.getElementById('result-area').classList.add('hidden');
 
     // Online mode: show/hide controls based on whose turn it is
@@ -139,6 +138,9 @@ function showQuestion() {
         waitingOverlay.classList.add('hidden');
         waitingForAnswer = true;
     }
+
+    // Render timeline AFTER waitingForAnswer is set, so slot buttons appear
+    renderTimeline();
 }
 
 function renderTimeline() {
