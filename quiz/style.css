@@ -62,6 +62,25 @@ body {
     transform: rotate(180deg);
 }
 
+.btn-flip {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 1.3rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.game-header {
+    position: relative;
+}
+
 /* Buttons */
 .btn-primary {
     background: linear-gradient(135deg, #e94560, #c23152);
