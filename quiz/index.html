@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frågesport - Testa dina kunskaper!</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <div class="logo">
+                <h1>Frågesport</h1>
+                <p class="subtitle">Testa dina kunskaper!</p>
+            </div>
+            <div class="mode-select">
+                <button class="btn-mode" onclick="showLocalSetup()">
+                    <span class="mode-icon">&#x1F3AE;</span>
+                    <span class="mode-title">Lokalt spel</span>
+                    <span class="mode-desc">Dela en enhet</span>
+                </button>
+                <button class="btn-mode" onclick="showOnlineSetup()">
+                    <span class="mode-icon">&#x1F310;</span>
+                    <span class="mode-title">Online</span>
+                    <span class="mode-desc">Spela med vänner</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Local Setup Screen -->
+        <div id="local-setup" class="screen">
+            <div class="screen-title">Lokalt spel</div>
+            <div class="start-options">
+                <div class="player-setup">
+                    <label>Antal spelare:</label>
+                    <div class="player-count-selector">
+                        <button class="btn-round" onclick="changePlayerCount(-1)">-</button>
+                        <span id="player-count-display">2</span>
+                        <button class="btn-round" onclick="changePlayerCount(1)">+</button>
+                    </div>
+                    <div id="player-names"></div>
+                </div>
+                <div class="category-select">
+                    <label>Välj kategorier:</label>
+                    <div id="category-buttons"></div>
+                </div>
+                <button class="btn-primary" onclick="startLocalGame()">Starta Spelet!</button>
+                <button class="btn-secondary" onclick="showScreen('start-screen')">Tillbaka</button>
+            </div>
+        </div>
+
+        <!-- Online Setup Screen -->
+        <div id="online-setup" class="screen">
+            <div class="screen-title">Online spel</div>
+            <div class="start-options">
+                <div class="online-name-input">
+                    <label>Ditt namn:</label>
+                    <input type="text" id="online-player-name" placeholder="Skriv ditt namn...">
+                </div>
+                <button class="btn-primary btn-full" onclick="createRoom()">Skapa rum</button>
+                <button class="btn-secondary btn-full" onclick="showJoinRoom()">Gå med i rum</button>
+                <div id="join-input" class="join-input hidden">
+                    <input type="text" id="room-code-input" placeholder="Ange rumskod..." maxlength="6" autocapitalize="characters">
+                    <button class="btn-primary" onclick="joinRoom()">Anslut</button>
+                </div>
+                <button class="btn-secondary" onclick="showScreen('start-screen')">Tillbaka</button>
+            </div>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="screen">
+            <div class="screen-title">Lobby</div>
+            <div class="start-options">
+                <div class="room-code-display">
+                    <div class="room-code-label">Rumskod:</div>
+                    <div class="room-code" id="room-code"></div>
+                    <button class="btn-small" onclick="copyRoomCode()">Kopiera</button>
+                </div>
+                <div class="lobby-players">
+                    <label>Spelare i rummet:</label>
+                    <div id="lobby-player-list"></div>
+                </div>
+                <div id="lobby-status" class="lobby-status">Väntar på spelare...</div>
+                <div id="host-controls" class="hidden">
+                    <div class="category-select">
+                        <label>Välj kategorier:</label>
+                        <div id="lobby-category-buttons"></div>
+                    </div>
+                    <button class="btn-primary" onclick="startOnlineGame()">Starta Spelet!</button>
+                </div>
+                <div id="guest-waiting" class="hidden">
+                    <div class="waiting-text">Väntar på att värden startar...</div>
+                </div>
+                <button class="btn-secondary" onclick="leaveLobby()">Lämna</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div class="round-info">Fråga <span id="current-question">1</span> / <span id="total-questions">10</span></div>
+                <div class="current-player">Det är <span id="player-turn"></span>s tur</div>
+            </div>
+            <div class="scoreboard" id="scoreboard"></div>
+            <div id="round-points" class="round-points hidden"></div>
+
+            <div class="question-card">
+                <div class="card-category" id="card-category"></div>
+                <div class="card-question" id="card-question"></div>
+            </div>
+
+            <div class="options-grid" id="options-container"></div>
+
+            <div id="waiting-overlay" class="waiting-overlay hidden">
+                <div class="waiting-text">Väntar på att <span id="waiting-for-player"></span> ska svara...</div>
+            </div>
+
+            <div id="result-area" class="result-area hidden">
+                <div id="result-text"></div>
+                <div id="result-points"></div>
+                <div class="result-buttons">
+                    <button class="btn-continue hidden" id="continue-btn" onclick="continueRound()">Fortsätt</button>
+                    <button class="btn-stop hidden" id="stop-btn" onclick="stopRound()">Stanna</button>
+                    <button class="btn-primary hidden" id="next-btn" onclick="nextTurn()">Nästa spelare</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="screen">
+            <h1>Spelet är slut!</h1>
+            <div id="final-scores"></div>
+            <div id="winner-announcement"></div>
+            <button class="btn-primary" onclick="resetGame()">Spela igen</button>
+        </div>
+    </div>
+
+    <script src="logger.js"></script>
+    <script src="questions.js"></script>
+    <script src="game.js"></script>
+    <script src="online.js"></script>
+</body>
+</html>
