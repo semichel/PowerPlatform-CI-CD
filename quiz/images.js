@@ -1,5 +1,5 @@
 // Image-based questions for all categories
-// Uses free image sources: flagcdn, imgflip, wikimedia commons
+// Uses free image sources: flagcdn (flags), imgflip (memes), unsplash (photos)
 
 const IMAGE_QUESTIONS = [
     // === MEMES ===
@@ -85,61 +85,57 @@ const IMAGE_QUESTIONS = [
     { category: "Flaggor", question: "Vilket land har denna flagga?", image: "https://flagcdn.com/w320/ng.png",
       options: ["Nigeria", "Irland", "Elfenbenskusten", "Indien"], answer: "Nigeria" },
 
-    // === GEOGRAFI (bilder) ===
-    { category: "Geografi", question: "Vilken känd byggnad är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Tour_Eiffel_Wikimedia_Commons.jpg/300px-Tour_Eiffel_Wikimedia_Commons.jpg",
+    // === GEOGRAFI (bilder - Unsplash) ===
+    { category: "Geografi", question: "Vilken känd byggnad är detta?", image: "https://images.unsplash.com/photo-1543349689-9a4d426bee8e?w=400",
       options: ["Eiffeltornet", "Frihetsgudinnan", "Big Ben", "Pisa lutande torn"], answer: "Eiffeltornet" },
-    { category: "Geografi", question: "Vilken känd byggnad är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Colosseo_2020.jpg/320px-Colosseo_2020.jpg",
+    { category: "Geografi", question: "Vilken känd byggnad är detta?", image: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400",
       options: ["Colosseum", "Parthenon", "Circus Maximus", "Pantheon"], answer: "Colosseum" },
-    { category: "Geografi", question: "Vilken känd byggnad är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Sydney_Opera_House%2C_botanic_gardens_1.jpg/320px-Sydney_Opera_House%2C_botanic_gardens_1.jpg",
+    { category: "Geografi", question: "Vilken känd byggnad är detta?", image: "https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?w=400",
       options: ["Sydney Operahus", "Walt Disney Concert Hall", "Guggenheim Bilbao", "Lotus Temple"], answer: "Sydney Operahus" },
-    { category: "Geografi", question: "Vilken känd byggnad är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Taj_Mahal_in_India_-_Tekniska_museet_-_World_Wonders.jpg/320px-Taj_Mahal_in_India_-_Tekniska_museet_-_World_Wonders.jpg",
+    { category: "Geografi", question: "Vilken känd byggnad är detta?", image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400",
       options: ["Taj Mahal", "Vita Huset", "Buckingham Palace", "Hagia Sophia"], answer: "Taj Mahal" },
+    { category: "Geografi", question: "Vilken känd byggnad är detta?", image: "https://images.unsplash.com/photo-1526711657229-e7e080ed7aa1?w=400",
+      options: ["Kinesiska muren", "Hadrians mur", "Berlins mur", "Västbanksbarriären"], answer: "Kinesiska muren" },
+    { category: "Geografi", question: "Vilken känd byggnad är detta?", image: "https://images.unsplash.com/photo-1555109307-f7d9da25c244?w=400",
+      options: ["Frihetsgudinnan", "Eiffeltornet", "Cristo Redentor", "Big Ben"], answer: "Frihetsgudinnan" },
 
-    // === HISTORIA (bilder) ===
-    { category: "Historia", question: "Vem är denna historiska person?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/N.Tesla.JPG/220px-N.Tesla.JPG",
-      options: ["Nikola Tesla", "Albert Einstein", "Thomas Edison", "Alexander Graham Bell"], answer: "Nikola Tesla" },
-    { category: "Historia", question: "Vem är denna historiska person?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Einstein_1921_by_F_Schmutzer_-_restoration.jpg/220px-Einstein_1921_by_F_Schmutzer_-_restoration.jpg",
-      options: ["Albert Einstein", "Nikola Tesla", "Niels Bohr", "Max Planck"], answer: "Albert Einstein" },
-    { category: "Historia", question: "Vem är denna historiska person?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/220px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg",
+    // === HISTORIA (bilder - Unsplash) ===
+    { category: "Historia", question: "Vilken känd tavla är detta?", image: "https://images.unsplash.com/photo-1423742774270-6884aac775fa?w=400",
       options: ["Mona Lisa", "Venus från Milo", "Flicka med pärlörhänge", "Frida Kahlo"], answer: "Mona Lisa" },
+    { category: "Historia", question: "Vilken historisk plats är detta?", image: "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?w=400",
+      options: ["Pyramiderna i Giza", "Machu Picchu", "Stonehenge", "Parthenon"], answer: "Pyramiderna i Giza" },
+    { category: "Historia", question: "Vilken historisk plats är detta?", image: "https://images.unsplash.com/photo-1526739178209-77cd5d224e70?w=400",
+      options: ["Stonehenge", "Pyramiderna", "Colosseum", "Akropolis"], answer: "Stonehenge" },
 
-    // === SPEL (bilder) ===
-    { category: "Spel", question: "Vilket spel är detta ifrån?", image: "https://upload.wikimedia.org/wikipedia/en/thumb/b/b3/Minecraft_creative.png/300px-Minecraft_creative.png",
-      options: ["Minecraft", "Roblox", "Terraria", "Lego Worlds"], answer: "Minecraft" },
-    { category: "Spel", question: "Vilken karaktär är detta?", image: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a9/MarioNSMBUDeluxe.png/220px-MarioNSMBUDeluxe.png",
-      options: ["Mario", "Luigi", "Wario", "Toad"], answer: "Mario" },
-
-    // === ANIME (bilder) ===
-    { category: "Anime", question: "Vilken anime är denna karaktär ifrån?", image: "https://upload.wikimedia.org/wikipedia/en/thumb/4/41/Luffy_first_episode.png/220px-Luffy_first_episode.png",
-      options: ["One Piece", "Naruto", "Dragon Ball", "Bleach"], answer: "One Piece" },
-
-    // === VETENSKAP (bilder) ===
-    { category: "Vetenskap", question: "Vilken planet är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/280px-FullMoon2010.jpg",
+    // === VETENSKAP (bilder - Unsplash) ===
+    { category: "Vetenskap", question: "Vilken himlakropp är detta?", image: "https://images.unsplash.com/photo-1522030299830-16b8d3d049fe?w=400",
       options: ["Månen", "Merkurius", "Mars", "Pluto"], answer: "Månen" },
-    { category: "Vetenskap", question: "Vilken planet är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Saturn_during_Equinox.jpg/300px-Saturn_during_Equinox.jpg",
+    { category: "Vetenskap", question: "Vilken planet är detta?", image: "https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=400",
       options: ["Saturnus", "Jupiter", "Uranus", "Neptunus"], answer: "Saturnus" },
+    { category: "Vetenskap", question: "Vilken planet är detta?", image: "https://images.unsplash.com/photo-1630694093867-4b947d812bf0?w=400",
+      options: ["Mars", "Merkurius", "Venus", "Månen"], answer: "Mars" },
 
-    // === MAT (bilder) ===
-    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Eq_it-na_pizza-margherita_sep2005_sml.jpg/280px-Eq_it-na_pizza-margherita_sep2005_sml.jpg",
-      options: ["Pizza Margherita", "Focaccia", "Pizza Marinara", "Calzone"], answer: "Pizza Margherita" },
-    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Big_Mac_hamburger.jpg/280px-Big_Mac_hamburger.jpg",
-      options: ["Big Mac", "Whopper", "Quarter Pounder", "Cheeseburger"], answer: "Big Mac" },
-    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sushi_platter.jpg/320px-Sushi_platter.jpg",
+    // === MAT (bilder - Unsplash) ===
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400",
+      options: ["Pizza", "Focaccia", "Calzone", "Bruschetta"], answer: "Pizza" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://images.unsplash.com/photo-1553621042-f6e147245754?w=400",
       options: ["Sushi", "Sashimi", "Onigiri", "Maki"], answer: "Sushi" },
-    { category: "Mat", question: "Vilken frukt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Durian.jpg/280px-Durian.jpg",
-      options: ["Durian", "Jackfruit", "Brödfruktsträd", "Cherimoya"], answer: "Durian" },
-    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Paella_mixta.jpg/300px-Paella_mixta.jpg",
-      options: ["Paella", "Risotto", "Jambalaya", "Biryani"], answer: "Paella" },
-    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Spaghetti_Bolognese_mit_Parmesan_oder_Grana_Padano.jpg/280px-Spaghetti_Bolognese_mit_Parmesan_oder_Grana_Padano.jpg",
-      options: ["Spaghetti Bolognese", "Spaghetti Carbonara", "Pasta Pomodoro", "Linguine al Ragu"], answer: "Spaghetti Bolognese" },
-    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Pad_Thai.jpg/280px-Pad_Thai.jpg",
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400",
+      options: ["Hamburgare", "Hot dog", "Smörgås", "Club sandwich"], answer: "Hamburgare" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://images.unsplash.com/photo-1559847844-5315695dadae?w=400",
       options: ["Pad Thai", "Lo Mein", "Chow Mein", "Yakisoba"], answer: "Pad Thai" },
-    { category: "Mat", question: "Vilken bakverk är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Croissant%2C_June_2010.jpg/280px-Croissant%2C_June_2010.jpg",
+    { category: "Mat", question: "Vilken bakverk är detta?", image: "https://images.unsplash.com/photo-1555507036-ab1f4038024a?w=400",
       options: ["Croissant", "Pain au chocolat", "Brioche", "Danish"], answer: "Croissant" },
-    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Falafel_balls.jpg/280px-Falafel_balls.jpg",
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://images.unsplash.com/photo-1534938665420-4c62e6e5e7e1?w=400",
       options: ["Falafel", "Arancini", "Kibbeh", "Croquetas"], answer: "Falafel" },
-    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Supreme_pizza.jpg/280px-Supreme_pizza.jpg",
-      options: ["Supreme Pizza", "Pizza Margherita", "Pepperoni Pizza", "Hawaiian Pizza"], answer: "Supreme Pizza" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400",
+      options: ["Ramen", "Pho", "Udon", "Tom Yum"], answer: "Ramen" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400",
+      options: ["Tacos", "Burrito", "Enchilada", "Quesadilla"], answer: "Tacos" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=400",
+      options: ["Pasta Carbonara", "Pasta Bolognese", "Pasta Alfredo", "Cacio e Pepe"], answer: "Pasta Carbonara" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400",
+      options: ["Paella", "Risotto", "Jambalaya", "Biryani"], answer: "Paella" },
 ];
 
 const IMAGE_CATEGORIES = [...new Set(IMAGE_QUESTIONS.map(q => q.category))];
