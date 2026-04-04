@@ -90,7 +90,9 @@ function prepareAndStartGame(providedPlayerQuestions) {
         const wantsMusic = selectedCategories.has('Musik');
         const otherCategories = [...selectedCategories].filter(c => c !== 'Musik');
         const filtered = QUESTIONS.filter(q => otherCategories.includes(q.category));
-        const shuffled = shuffleArray(filtered);
+        const imageFiltered = IMAGE_QUESTIONS.filter(q => otherCategories.includes(q.category));
+        const allTextAndImage = [...filtered, ...imageFiltered];
+        const shuffled = shuffleArray(allTextAndImage);
 
         // Generate music questions if selected
         const musicQs = wantsMusic ? generateMusicQuestions(players.length * 3) : [];
@@ -159,6 +161,16 @@ function showQuestion() {
     const q = myQuestions[qi];
     document.getElementById('card-category').textContent = q.category;
     document.getElementById('card-question').textContent = q.question;
+
+    // Handle image questions
+    const cardImage = document.getElementById('card-image');
+    if (q.image) {
+        cardImage.src = q.image;
+        cardImage.classList.remove('hidden');
+    } else {
+        cardImage.classList.add('hidden');
+        cardImage.src = '';
+    }
 
     // Handle music questions - show/hide audio player
     const audioPlayer = document.getElementById('audio-player');
@@ -244,8 +256,8 @@ function renderOptions(q) {
         container.appendChild(btn);
     });
 
-    // Single column for music (10 options) or text options
-    if (isMusic) {
+    // Single column for music (many options) or meme questions (8 options)
+    if (isMusic || q.options.length > 4) {
         container.classList.add('options-single-col');
     } else {
         container.classList.remove('options-single-col');

@@ -139,4 +139,4 @@ const QUESTIONS = [
     { category: "Serier", question: "Vad heter Geralt i The Witcher?", options: ["Geralt av Rivia", "Geralt av Kaer Morhen", "Geralt av Nilfgaard", "Geralt av Cintra"], answer: "Geralt av Rivia" },
 ];
 
-const CATEGORIES = [...new Set(QUESTIONS.map(q => q.category)), 'Musik'];
+const CATEGORIES = [...new Set([...QUESTIONS.map(q => q.category), ...IMAGE_CATEGORIES]), 'Musik'];
