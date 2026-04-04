@@ -101,6 +101,7 @@ let currentAudioBuffer = null;
 let audioPlaying = false;
 let audioProgressInterval = null;
 let audioStartTime = 0;
+let musicDurationLimit = 5; // sekunder att spela (ställs in av användaren)
 
 function getAudioContext() {
     if (!audioCtx) {
@@ -180,7 +181,11 @@ function playAudioBuffer(buffer) {
     currentAudioSource = ctx.createBufferSource();
     currentAudioSource.buffer = buffer;
     currentAudioSource.connect(ctx.destination);
-    currentAudioSource.start();
+
+    // Spela från en slumpmässig startpunkt, begränsat till musicDurationLimit sekunder
+    const maxStart = Math.max(0, buffer.duration - musicDurationLimit);
+    const startOffset = Math.random() * maxStart;
+    currentAudioSource.start(0, startOffset, musicDurationLimit);
     audioPlaying = true;
     audioStartTime = ctx.currentTime;
 
@@ -191,7 +196,7 @@ function playAudioBuffer(buffer) {
     };
 
     updatePlayButton();
-    startProgressTracking(buffer.duration);
+    startProgressTracking(musicDurationLimit);
 }
 
 function stopAudioPlayback() {

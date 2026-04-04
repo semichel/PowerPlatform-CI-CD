@@ -103,6 +103,34 @@ body {
     margin-bottom: 20px;
 }
 
+.music-duration-setting {
+    margin: 16px 0;
+    text-align: center;
+}
+
+.music-duration-setting label {
+    display: block;
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+    color: #c0c0d8;
+}
+
+.duration-selector {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 6px;
+    font-size: 1.8rem;
+    color: #fff;
+    font-weight: 700;
+}
+
+.duration-hint {
+    font-size: 0.8rem;
+    color: #808098;
+}
+
 .player-setup label,
 .category-select label {
     display: block;

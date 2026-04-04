@@ -14,7 +14,7 @@
             <div class="logo">
                 <h1>Frågesport</h1>
                 <p class="subtitle">Testa dina kunskaper!</p>
-                <p class="version">v2.0</p>
+                <p class="version">v2.1</p>
             </div>
             <div class="mode-select">
                 <button class="btn-mode" onclick="showLocalSetup()">
@@ -47,6 +47,15 @@
                 <div class="category-select">
                     <label>Välj kategorier:</label>
                     <div id="category-buttons"></div>
+                </div>
+                <div class="music-duration-setting">
+                    <label>Musik speltid:</label>
+                    <div class="duration-selector">
+                        <button class="btn-round" onclick="changeMusicDuration(-1)">-</button>
+                        <span id="music-duration-display">5s</span>
+                        <button class="btn-round" onclick="changeMusicDuration(1)">+</button>
+                    </div>
+                    <div class="duration-hint">Kortare = svårare</div>
                 </div>
                 <button class="btn-primary" onclick="startLocalGame()">Starta Spelet!</button>
                 <button class="btn-secondary" onclick="showScreen('start-screen')">Tillbaka</button>
@@ -89,6 +98,15 @@
                     <div class="category-select">
                         <label>Välj kategorier:</label>
                         <div id="lobby-category-buttons"></div>
+                    </div>
+                    <div class="music-duration-setting">
+                        <label>Musik speltid:</label>
+                        <div class="duration-selector">
+                            <button class="btn-round" onclick="changeMusicDuration(-1)">-</button>
+                            <span id="lobby-music-duration-display">5s</span>
+                            <button class="btn-round" onclick="changeMusicDuration(1)">+</button>
+                        </div>
+                        <div class="duration-hint">Kortare = svårare</div>
                     </div>
                     <button class="btn-primary" onclick="startOnlineGame()">Starta Spelet!</button>
                 </div>

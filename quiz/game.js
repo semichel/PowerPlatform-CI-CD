@@ -55,6 +55,13 @@ function updatePlayerNames() {
     }
 }
 
+// Music duration setting
+function changeMusicDuration(delta) {
+    musicDurationLimit = Math.max(1, Math.min(30, musicDurationLimit + delta));
+    const displays = document.querySelectorAll('#music-duration-display, #lobby-music-duration-display');
+    displays.forEach(d => { if (d) d.textContent = musicDurationLimit + 's'; });
+}
+
 // Mode selection
 function showLocalSetup() {
     showScreen('local-setup');
