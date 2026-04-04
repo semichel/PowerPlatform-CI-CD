@@ -52,12 +52,11 @@ function createRoom() {
     isHost = true;
     isOnlineGame = true;
 
-    // Show lobby immediately with "connecting" status
     lobbyPlayers = [{ name: myName, peerId: '' }];
     showLobby();
     setStatus('Ansluter till server...');
 
-    const peerId = 'narDa' + roomCode;
+    const peerId = 'quiz' + roomCode;
     peer = new Peer(peerId, PEER_CONFIG);
 
     connectionTimeout = setTimeout(() => {
@@ -105,12 +104,11 @@ function createRoom() {
         clearTimeout(connectionTimeout);
         Logger.log('ERROR', `PeerJS: ${err.type}: ${err.message}`);
         if (err.type === 'unavailable-id') {
-            // Try a new code
             roomCode = generateRoomCode();
             setStatus('Koden var upptagen, försöker med ny kod...');
             document.getElementById('room-code').textContent = roomCode;
             peer.destroy();
-            const newPeerId = 'narDa' + roomCode;
+            const newPeerId = 'quiz' + roomCode;
             peer = new Peer(newPeerId, PEER_CONFIG);
             peer.on('open', () => {
                 lobbyPlayers[0].peerId = peer.id;
@@ -156,7 +154,6 @@ function joinRoom() {
     isHost = false;
     isOnlineGame = true;
 
-    // Show lobby with connecting status
     lobbyPlayers = [{ name: myName, peerId: '' }];
     showLobby();
     setStatus('Ansluter till rum ' + roomCode + '...');
@@ -172,7 +169,7 @@ function joinRoom() {
         Logger.log('GAME', `Gäst ansluten med ID: ${peer.id}`);
         setStatus('Ansluter till rum ' + roomCode + '...');
 
-        const hostId = 'narDa' + roomCode;
+        const hostId = 'quiz' + roomCode;
         hostConnection = peer.connect(hostId, { reliable: true, serialization: 'json' });
 
         hostConnection.on('open', () => {
@@ -247,13 +244,11 @@ function updateLobbyUI() {
 
     if (lobbyPlayers.length > 0) {
         const statusEl = document.getElementById('lobby-status');
-        // Don't overwrite connection status messages
         if (!statusEl.textContent.includes('Ansluter')) {
             statusEl.textContent = `${lobbyPlayers.length} spelare i rummet`;
         }
     }
 
-    // Broadcast lobby update to all guests
     if (isHost) {
         broadcastToGuests({ type: 'lobby-update', players: lobbyPlayers });
     }
@@ -298,17 +293,15 @@ function handleHostMessage(conn, data) {
             lobbyPlayers.push({ name: data.name, peerId: data.peerId });
             setStatus(`${data.name} anslöt! ${lobbyPlayers.length} spelare i rummet.`);
             updateLobbyUI();
-            // Send lobby state to the new player
             conn.send({ type: 'lobby-update', players: lobbyPlayers });
             break;
 
-        case 'place-event':
-            processPlacement(data.slotIndex);
+        case 'select-answer':
+            processAnswer(data.selectedOption);
             broadcastToGuests({
-                type: 'placement-result',
-                slotIndex: data.slotIndex,
+                type: 'answer-result',
+                selectedOption: data.selectedOption,
                 players: players,
-                playerTimelines: playerTimelines,
                 roundPoints: roundPoints,
                 playerQuestionIndex: playerQuestionIndex,
                 currentPlayerIndex: currentPlayerIndex
@@ -340,34 +333,23 @@ function handleGuestMessage(data) {
             players = data.players;
             myPlayerIndex = data.yourIndex;
             playerQuestions = data.playerQuestions;
-            playerTimelines = data.playerTimelines;
             isOnlineGame = true;
             Logger.log('GAME', `Jag är spelare ${myPlayerIndex}: ${players[myPlayerIndex].name}`);
-            prepareAndStartGame(data.playerQuestions, data.playerTimelines);
+            prepareAndStartGame(data.playerQuestions);
             showQuestion();
             break;
 
-        case 'placement-result': {
+        case 'answer-result': {
             players = data.players;
-            playerTimelines = data.playerTimelines;
             roundPoints = data.roundPoints;
             playerQuestionIndex = data.playerQuestionIndex;
             currentPlayerIndex = data.currentPlayerIndex;
 
             const pi = data.currentPlayerIndex;
-            const timeline = data.playerTimelines[pi];
-            const lastAdded = timeline[timeline.length - 1];
-            const slotIdx = data.slotIndex;
-            let correct = false;
-            const prevTimeline = timeline.slice(0, -1).sort((a, b) => a.answer - b.answer);
-            if (slotIdx === 0) {
-                correct = lastAdded.answer <= prevTimeline[0].answer;
-            } else if (slotIdx >= prevTimeline.length) {
-                correct = lastAdded.answer >= prevTimeline[prevTimeline.length - 1].answer;
-            } else {
-                correct = lastAdded.answer >= prevTimeline[slotIdx - 1].answer && lastAdded.answer <= prevTimeline[slotIdx].answer;
-            }
-            showResult(lastAdded, correct);
+            const qi = data.playerQuestionIndex[pi] || 0;
+            const q = playerQuestions[pi][qi];
+            const correct = data.selectedOption === q.answer;
+            showResult(q, correct, data.selectedOption);
             break;
         }
 
@@ -417,18 +399,13 @@ function startOnlineGame() {
     myPlayerIndex = 0;
     isOnlineGame = true;
 
-    // Split questions per player (same as local mode logic)
     const filtered = QUESTIONS.filter(q => selectedCategories.has(q.category));
     const shuffled = shuffleArray(filtered);
 
     playerQuestions = [];
-    playerTimelines = [];
-
     for (let i = 0; i < players.length; i++) {
-        const start = i * (QUESTIONS_PER_PLAYER + 1);
-        const playerCards = shuffled.slice(start, start + QUESTIONS_PER_PLAYER + 1);
-        const starter = playerCards.shift();
-        playerTimelines.push([starter]);
+        const start = i * QUESTIONS_PER_PLAYER;
+        const playerCards = shuffled.slice(start, start + QUESTIONS_PER_PLAYER);
         playerQuestions.push(playerCards);
     }
 
@@ -441,8 +418,7 @@ function startOnlineGame() {
                 type: 'game-start',
                 players: players,
                 yourIndex: guestIndex,
-                playerQuestions: playerQuestions,
-                playerTimelines: playerTimelines
+                playerQuestions: playerQuestions
             });
         }
     });
@@ -459,21 +435,20 @@ function startOnlineGame() {
 }
 
 // Online game actions
-function onlinePlaceEvent(slotIndex) {
+function onlineSelectAnswer(selectedOption) {
     if (isHost) {
-        processPlacement(slotIndex);
+        processAnswer(selectedOption);
         broadcastToGuests({
-            type: 'placement-result',
-            slotIndex: slotIndex,
+            type: 'answer-result',
+            selectedOption: selectedOption,
             players: players,
-            playerTimelines: playerTimelines,
             roundPoints: roundPoints,
             playerQuestionIndex: playerQuestionIndex,
             currentPlayerIndex: currentPlayerIndex
         });
     } else {
         if (hostConnection && hostConnection.open) {
-            hostConnection.send({ type: 'place-event', slotIndex: slotIndex });
+            hostConnection.send({ type: 'select-answer', selectedOption: selectedOption });
         } else {
             alert('Tappade anslutningen till värden.');
         }
@@ -500,7 +475,6 @@ function onlineStopRound() {
         roundPoints = 0;
         playerQuestionIndex[currentPlayerIndex]++;
 
-        // Find next player with cards
         let tried = 0;
         do {
             currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
@@ -527,7 +501,6 @@ function onlineNextTurn() {
     roundPoints = 0;
     playerQuestionIndex[currentPlayerIndex]++;
 
-    // Find next player with cards
     let tried = 0;
     do {
         currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
