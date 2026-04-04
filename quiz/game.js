@@ -87,27 +87,23 @@ function prepareAndStartGame(providedPlayerQuestions) {
     if (providedPlayerQuestions) {
         playerQuestions = providedPlayerQuestions;
     } else {
-        const wantsMusic = selectedCategories.has('Musik');
-        const otherCategories = [...selectedCategories].filter(c => c !== 'Musik');
-        const filtered = QUESTIONS.filter(q => otherCategories.includes(q.category));
-        const imageFiltered = IMAGE_QUESTIONS.filter(q => otherCategories.includes(q.category));
-        const allTextAndImage = [...filtered, ...imageFiltered];
-        const shuffled = shuffleArray(allTextAndImage);
+        const cats = [...selectedCategories];
+        const filtered = QUESTIONS.filter(q => cats.includes(q.category));
+        const imageFiltered = IMAGE_QUESTIONS.filter(q => cats.includes(q.category));
+        const allRegular = shuffleArray([...filtered, ...imageFiltered]);
 
-        // Generate music questions if selected
-        const musicQs = wantsMusic ? generateMusicQuestions(players.length * 3) : [];
-        const shuffledMusic = shuffleArray(musicQs);
+        // Generate music questions matching selected categories
+        const musicQs = shuffleArray(generateMusicQuestionsForCategories(cats));
 
         playerQuestions = [];
         for (let i = 0; i < players.length; i++) {
             const start = i * QUESTIONS_PER_PLAYER;
-            let playerCards = shuffled.slice(start, start + QUESTIONS_PER_PLAYER);
+            let playerCards = allRegular.slice(start, start + QUESTIONS_PER_PLAYER);
 
-            // Mix in music questions (replace some regular ones)
-            if (wantsMusic && shuffledMusic.length > 0) {
-                const musicPerPlayer = Math.min(3, shuffledMusic.length);
-                const myMusic = shuffledMusic.splice(0, musicPerPlayer);
-                // Replace last N questions with music questions
+            // Mix in 2-3 music questions per player (if available)
+            if (musicQs.length > 0) {
+                const musicPerPlayer = Math.min(3, musicQs.length);
+                const myMusic = musicQs.splice(0, musicPerPlayer);
                 const regularCount = QUESTIONS_PER_PLAYER - musicPerPlayer;
                 playerCards = playerCards.slice(0, regularCount);
                 playerCards = shuffleArray([...playerCards, ...myMusic]);

@@ -156,4 +156,4 @@ const QUESTIONS = [
     { category: "Mat", question: "Vilken böna används för att göra choklad?", options: ["Kakaoböna", "Vaniljböna", "Kaffeböna", "Sojaböna"], answer: "Kakaoböna" },
 ];
 
-const CATEGORIES = [...new Set([...QUESTIONS.map(q => q.category), ...IMAGE_CATEGORIES]), 'Musik'];
+const CATEGORIES = [...new Set([...QUESTIONS.map(q => q.category), ...IMAGE_CATEGORIES])];

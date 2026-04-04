@@ -1,73 +1,98 @@
 // Music module - "Gissa låten" using Deezer previews via SoundWarp proxy
 const PROXY_BASE = 'https://soundwarp-api.semichel.workers.dev';
 
-// Track database with verified Deezer IDs
+// Track database - each track belongs to a quiz category
+// genre is kept for generating tricky wrong answers (same genre = harder)
 const MUSIC_TRACKS = [
-    // Pop
-    { id: 568115892, title: 'Bohemian Rhapsody', artist: 'Queen', genre: 'Pop' },
-    { id: 4603408, title: 'Billie Jean', artist: 'Michael Jackson', genre: 'Pop' },
-    { id: 116348632, title: 'Hey Jude', artist: 'The Beatles', genre: 'Pop' },
-    { id: 908604612, title: 'Blinding Lights', artist: 'The Weeknd', genre: 'Pop' },
-    { id: 1174602992, title: 'Rolling in the Deep', artist: 'Adele', genre: 'Pop' },
-    { id: 139470659, title: 'Shape of You', artist: 'Ed Sheeran', genre: 'Pop' },
-    { id: 701326562, title: 'Happy', artist: 'Pharrell Williams', genre: 'Pop' },
-    { id: 13693497, title: 'Smells Like Teen Spirit', artist: 'Nirvana', genre: 'Pop' },
-    { id: 664507, title: 'Like a Prayer', artist: 'Madonna', genre: 'Pop' },
-    { id: 119615552, title: 'Somebody That I Used To Know', artist: 'Gotye', genre: 'Pop' },
-    { id: 426703682, title: 'Hotel California', artist: 'Eagles', genre: 'Pop' },
-    { id: 538660022, title: "Livin' on a Prayer", artist: 'Bon Jovi', genre: 'Pop' },
-    { id: 664107, title: 'Take On Me', artist: 'a-ha', genre: 'Pop' },
-    { id: 734508762, title: 'Poker Face', artist: 'Lady Gaga', genre: 'Pop' },
-    { id: 518458172, title: "Sweet Child O' Mine", artist: "Guns N' Roses", genre: 'Pop' },
-    { id: 625643, title: "Don't Stop Believin'", artist: 'Journey', genre: 'Pop' },
-    { id: 739870792, title: 'Dance Monkey', artist: 'Tones and I', genre: 'Pop' },
-    { id: 1124841682, title: 'Levitating', artist: 'Dua Lipa', genre: 'Pop' },
-    { id: 655095912, title: 'bad guy', artist: 'Billie Eilish', genre: 'Pop' },
-    { id: 2105158337, title: 'Flowers', artist: 'Miley Cyrus', genre: 'Pop' },
+    // === Kultur (pop, hip-hop, edm - allmän musik) ===
+    { id: 568115892, title: 'Bohemian Rhapsody', artist: 'Queen', category: 'Kultur', genre: 'Pop' },
+    { id: 4603408, title: 'Billie Jean', artist: 'Michael Jackson', category: 'Kultur', genre: 'Pop' },
+    { id: 116348632, title: 'Hey Jude', artist: 'The Beatles', category: 'Kultur', genre: 'Pop' },
+    { id: 908604612, title: 'Blinding Lights', artist: 'The Weeknd', category: 'Kultur', genre: 'Pop' },
+    { id: 1174602992, title: 'Rolling in the Deep', artist: 'Adele', category: 'Kultur', genre: 'Pop' },
+    { id: 139470659, title: 'Shape of You', artist: 'Ed Sheeran', category: 'Kultur', genre: 'Pop' },
+    { id: 701326562, title: 'Happy', artist: 'Pharrell Williams', category: 'Kultur', genre: 'Pop' },
+    { id: 13693497, title: 'Smells Like Teen Spirit', artist: 'Nirvana', category: 'Kultur', genre: 'Pop' },
+    { id: 664507, title: 'Like a Prayer', artist: 'Madonna', category: 'Kultur', genre: 'Pop' },
+    { id: 119615552, title: 'Somebody That I Used To Know', artist: 'Gotye', category: 'Kultur', genre: 'Pop' },
+    { id: 426703682, title: 'Hotel California', artist: 'Eagles', category: 'Kultur', genre: 'Pop' },
+    { id: 538660022, title: "Livin' on a Prayer", artist: 'Bon Jovi', category: 'Kultur', genre: 'Pop' },
+    { id: 664107, title: 'Take On Me', artist: 'a-ha', category: 'Kultur', genre: 'Pop' },
+    { id: 734508762, title: 'Poker Face', artist: 'Lady Gaga', category: 'Kultur', genre: 'Pop' },
+    { id: 518458172, title: "Sweet Child O' Mine", artist: "Guns N' Roses", category: 'Kultur', genre: 'Pop' },
+    { id: 625643, title: "Don't Stop Believin'", artist: 'Journey', category: 'Kultur', genre: 'Pop' },
+    { id: 739870792, title: 'Dance Monkey', artist: 'Tones and I', category: 'Kultur', genre: 'Pop' },
+    { id: 1124841682, title: 'Levitating', artist: 'Dua Lipa', category: 'Kultur', genre: 'Pop' },
+    { id: 655095912, title: 'bad guy', artist: 'Billie Eilish', category: 'Kultur', genre: 'Pop' },
+    { id: 2105158337, title: 'Flowers', artist: 'Miley Cyrus', category: 'Kultur', genre: 'Pop' },
+    { id: 1109731, title: 'Lose Yourself', artist: 'Eminem', category: 'Kultur', genre: 'Hip-Hop' },
+    { id: 609244, title: 'Crazy in Love', artist: 'Beyonce', category: 'Kultur', genre: 'Hip-Hop' },
+    { id: 145429536, title: 'In Da Club', artist: '50 Cent', category: 'Kultur', genre: 'Hip-Hop' },
+    { id: 61424045, title: 'Thrift Shop', artist: 'Macklemore', category: 'Kultur', genre: 'Hip-Hop' },
+    { id: 536421002, title: 'SICKO MODE', artist: 'Travis Scott', category: 'Kultur', genre: 'Hip-Hop' },
+    { id: 533609232, title: "God's Plan", artist: 'Drake', category: 'Kultur', genre: 'Hip-Hop' },
+    { id: 630827242, title: 'Stronger', artist: 'Kanye West', category: 'Kultur', genre: 'Hip-Hop' },
+    { id: 2793753, title: 'Juicy', artist: 'The Notorious B.I.G.', category: 'Kultur', genre: 'Hip-Hop' },
+    { id: 1584416372, title: "Gangsta's Paradise", artist: 'Coolio', category: 'Kultur', genre: 'Hip-Hop' },
+    { id: 87960517, title: 'California Love', artist: '2Pac', category: 'Kultur', genre: 'Hip-Hop' },
+    { id: 62847142, title: 'Titanium', artist: 'David Guetta ft. Sia', category: 'Kultur', genre: 'EDM' },
+    { id: 11390027, title: 'Sandstorm', artist: 'Darude', category: 'Kultur', genre: 'EDM' },
+    { id: 140295501, title: 'Faded', artist: 'Alan Walker', category: 'Kultur', genre: 'EDM' },
+    { id: 89629797, title: 'Blue (Da Ba Dee)', artist: 'Eiffel 65', category: 'Kultur', genre: 'EDM' },
+    { id: 2102633427, title: 'Animals', artist: 'Martin Garrix', category: 'Kultur', genre: 'EDM' },
+    { id: 3129775, title: 'Around the World', artist: 'Daft Punk', category: 'Kultur', genre: 'EDM' },
+    { id: 3135556, title: 'Harder Better Faster Stronger', artist: 'Daft Punk', category: 'Kultur', genre: 'EDM' },
+    { id: 90726629, title: 'Firestone', artist: 'Kygo', category: 'Kultur', genre: 'EDM' },
+    { id: 60904700, title: 'Clarity', artist: 'Zedd', category: 'Kultur', genre: 'EDM' },
 
-    // Svenska artister
-    { id: 884025, title: 'Dancing Queen', artist: 'ABBA', genre: 'Svenska' },
-    { id: 76376889, title: 'Waterloo', artist: 'ABBA', genre: 'Svenska' },
-    { id: 884030, title: 'Mamma Mia', artist: 'ABBA', genre: 'Svenska' },
-    { id: 884035, title: 'The Winner Takes It All', artist: 'ABBA', genre: 'Svenska' },
-    { id: 14383880, title: 'Levels', artist: 'Avicii', genre: 'Svenska' },
-    { id: 70266756, title: 'Wake Me Up', artist: 'Avicii', genre: 'Svenska' },
-    { id: 858371, title: 'The Final Countdown', artist: 'Europe', genre: 'Svenska' },
+    // === Sverige ===
+    { id: 884025, title: 'Dancing Queen', artist: 'ABBA', category: 'Sverige', genre: 'Svenska' },
+    { id: 76376889, title: 'Waterloo', artist: 'ABBA', category: 'Sverige', genre: 'Svenska' },
+    { id: 884030, title: 'Mamma Mia', artist: 'ABBA', category: 'Sverige', genre: 'Svenska' },
+    { id: 884035, title: 'The Winner Takes It All', artist: 'ABBA', category: 'Sverige', genre: 'Svenska' },
+    { id: 14383880, title: 'Levels', artist: 'Avicii', category: 'Sverige', genre: 'Svenska' },
+    { id: 70266756, title: 'Wake Me Up', artist: 'Avicii', category: 'Sverige', genre: 'Svenska' },
+    { id: 858371, title: 'The Final Countdown', artist: 'Europe', category: 'Sverige', genre: 'Svenska' },
 
-    // Hip-Hop
-    { id: 1109731, title: 'Lose Yourself', artist: 'Eminem', genre: 'Hip-Hop' },
-    { id: 609244, title: 'Crazy in Love', artist: 'Beyonce', genre: 'Hip-Hop' },
-    { id: 145429536, title: 'In Da Club', artist: '50 Cent', genre: 'Hip-Hop' },
-    { id: 61424045, title: 'Thrift Shop', artist: 'Macklemore', genre: 'Hip-Hop' },
-    { id: 536421002, title: 'SICKO MODE', artist: 'Travis Scott', genre: 'Hip-Hop' },
-    { id: 533609232, title: "God's Plan", artist: 'Drake', genre: 'Hip-Hop' },
-    { id: 630827242, title: 'Stronger', artist: 'Kanye West', genre: 'Hip-Hop' },
-    { id: 2793753, title: 'Juicy', artist: 'The Notorious B.I.G.', genre: 'Hip-Hop' },
-    { id: 1584416372, title: "Gangsta's Paradise", artist: 'Coolio', genre: 'Hip-Hop' },
-    { id: 87960517, title: 'California Love', artist: '2Pac', genre: 'Hip-Hop' },
+    // === Filmer ===
+    { id: 14552280, title: 'My Heart Will Go On', artist: 'Celine Dion', category: 'Filmer', genre: 'Soundtrack' },
+    { id: 561856742, title: 'Shallow', artist: 'Lady Gaga & Bradley Cooper', category: 'Filmer', genre: 'Soundtrack' },
+    { id: 72371930, title: 'Let It Go', artist: 'Idina Menzel', category: 'Filmer', genre: 'Soundtrack' },
+    { id: 136340808, title: "How Far I'll Go", artist: "Auli'i Cravalho", category: 'Filmer', genre: 'Soundtrack' },
+    { id: 95813354, title: 'See You Again', artist: 'Wiz Khalifa ft. Charlie Puth', category: 'Filmer', genre: 'Soundtrack' },
+    { id: 139138743, title: "Stayin' Alive", artist: 'Bee Gees', category: 'Filmer', genre: 'Soundtrack' },
 
-    // EDM
-    { id: 62847142, title: 'Titanium', artist: 'David Guetta ft. Sia', genre: 'EDM' },
-    { id: 11390027, title: 'Sandstorm', artist: 'Darude', genre: 'EDM' },
-    { id: 140295501, title: 'Faded', artist: 'Alan Walker', genre: 'EDM' },
-    { id: 89629797, title: 'Blue (Da Ba Dee)', artist: 'Eiffel 65', genre: 'EDM' },
-    { id: 2102633427, title: 'Animals', artist: 'Martin Garrix', genre: 'EDM' },
-    { id: 3129775, title: 'Around the World', artist: 'Daft Punk', genre: 'EDM' },
-    { id: 3135556, title: 'Harder Better Faster Stronger', artist: 'Daft Punk', genre: 'EDM' },
-    { id: 90726629, title: 'Firestone', artist: 'Kygo', genre: 'EDM' },
-    { id: 60904700, title: 'Clarity', artist: 'Zedd', genre: 'EDM' },
+    // === Serier ===
+    { id: 3613070, title: "I'll Be There for You", artist: 'The Rembrandts', category: 'Serier', genre: 'TV' },
+    { id: 67440765, title: 'Woke Up This Morning', artist: 'Alabama 3', category: 'Serier', genre: 'TV' },
+    { id: 15417862, title: 'California', artist: 'Phantom Planet', category: 'Serier', genre: 'TV' },
+    { id: 1562814, title: "I Don't Want to Miss a Thing", artist: 'Aerosmith', category: 'Serier', genre: 'TV' },
+    { id: 916424, title: 'My Way', artist: 'Frank Sinatra', category: 'Serier', genre: 'TV' },
 
-    // Film & TV
-    { id: 14552280, title: 'My Heart Will Go On', artist: 'Celine Dion', genre: 'Film & TV' },
-    { id: 561856742, title: 'Shallow', artist: 'Lady Gaga & Bradley Cooper', genre: 'Film & TV' },
-    { id: 576431, title: 'Eye of the Tiger', artist: 'Survivor', genre: 'Film & TV' },
-    { id: 139138743, title: "Stayin' Alive", artist: 'Bee Gees', genre: 'Film & TV' },
-    { id: 72371930, title: 'Let It Go', artist: 'Idina Menzel', genre: 'Film & TV' },
-    { id: 136340808, title: "How Far I'll Go", artist: "Auli'i Cravalho", genre: 'Film & TV' },
-    { id: 95813354, title: 'See You Again', artist: 'Wiz Khalifa ft. Charlie Puth', genre: 'Film & TV' },
+    // === Sport ===
+    { id: 576431, title: 'Eye of the Tiger', artist: 'Survivor', category: 'Sport', genre: 'Sport' },
+    { id: 12075, title: 'We Will Rock You', artist: 'Queen', category: 'Sport', genre: 'Sport' },
+    { id: 1171164, title: 'Thunderstruck', artist: 'AC/DC', category: 'Sport', genre: 'Sport' },
+    { id: 727824, title: 'Seven Nation Army', artist: 'The White Stripes', category: 'Sport', genre: 'Sport' },
+    { id: 12080, title: 'We Are the Champions', artist: 'Queen', category: 'Sport', genre: 'Sport' },
+    { id: 3604843, title: "Wavin' Flag", artist: "K'naan", category: 'Sport', genre: 'Sport' },
+    { id: 916072, title: 'Born to Run', artist: 'Bruce Springsteen', category: 'Sport', genre: 'Sport' },
+
+    // === Spel ===
+    { id: 95064670, title: 'Megalovania', artist: 'Toby Fox', category: 'Spel', genre: 'Game' },
+    { id: 129338192, title: 'Sweden', artist: 'C418', category: 'Spel', genre: 'Game' },
+    { id: 4362498, title: 'Still Alive', artist: 'Jonathan Coulton', category: 'Spel', genre: 'Game' },
+    { id: 71570764, title: 'Dragonborn', artist: 'Jeremy Soule', category: 'Spel', genre: 'Game' },
+    { id: 548936301, title: 'Jump Up, Super Star!', artist: 'Kate Davis', category: 'Spel', genre: 'Game' },
+
+    // === Anime ===
+    { id: 73248888, title: 'A Cruel Angel\'s Thesis', artist: 'Yoko Takahashi', category: 'Anime', genre: 'Anime' },
+    { id: 107448062, title: 'Unravel', artist: 'TK from Ling Tosite Sigure', category: 'Anime', genre: 'Anime' },
+    { id: 810786472, title: 'Gurenge', artist: 'LiSA', category: 'Anime', genre: 'Anime' },
+    { id: 4259671, title: 'Blue Bird', artist: 'Ikimono-gakari', category: 'Anime', genre: 'Anime' },
+    { id: 1643498142, title: 'The Rumbling', artist: 'SiM', category: 'Anime', genre: 'Anime' },
+    { id: 4368498, title: 'Cha-La Head-Cha-La', artist: 'Hironobu Kageyama', category: 'Anime', genre: 'Anime' },
 ];
-
-const MUSIC_GENRES = [...new Set(MUSIC_TRACKS.map(t => t.genre))];
 
 // Audio state
 let audioCtx = null;
@@ -261,7 +286,7 @@ function generateMusicQuestion(correctTrack, allTracks) {
     const wrongAnswers = generateTrickyOptions(correctTrack, allTracks);
 
     return {
-        category: 'Musik',
+        category: correctTrack.category,
         question: 'Vilken låt spelas?',
         options: [correctAnswer, ...wrongAnswers],
         answer: correctAnswer,
@@ -270,9 +295,9 @@ function generateMusicQuestion(correctTrack, allTracks) {
     };
 }
 
-// Generate N music questions
-function generateMusicQuestions(count) {
-    const shuffled = shuffleArray(MUSIC_TRACKS);
-    const selected = shuffled.slice(0, count);
-    return selected.map(track => generateMusicQuestion(track, MUSIC_TRACKS));
+// Generate music questions for specific categories
+function generateMusicQuestionsForCategories(categories) {
+    const matching = MUSIC_TRACKS.filter(t => categories.includes(t.category));
+    const shuffled = shuffleArray(matching);
+    return shuffled.map(track => generateMusicQuestion(track, MUSIC_TRACKS));
 }
