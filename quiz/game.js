@@ -90,6 +90,7 @@ function prepareAndStartGame(providedPlayerQuestions) {
         const cats = [...selectedCategories];
         const filtered = QUESTIONS.filter(q => cats.includes(q.category));
         const imageFiltered = IMAGE_QUESTIONS.filter(q => cats.includes(q.category));
+        Logger.log('GAME', `Frågor: ${filtered.length} text + ${imageFiltered.length} bild (kategorier: ${cats.join(', ')})`);
         const allRegular = shuffleArray([...filtered, ...imageFiltered]);
 
         // Generate music questions matching selected categories
@@ -161,11 +162,17 @@ function showQuestion() {
     // Handle image questions
     const cardImage = document.getElementById('card-image');
     if (q.image) {
+        cardImage.onload = () => Logger.log('GAME', `Bild laddad: ${q.image.substring(0, 60)}...`);
+        cardImage.onerror = () => {
+            Logger.log('ERROR', `Bild kunde inte laddas: ${q.image}`);
+            cardImage.alt = '[Bild kunde inte laddas]';
+        };
         cardImage.src = q.image;
+        cardImage.alt = 'Frågebild';
         cardImage.classList.remove('hidden');
     } else {
         cardImage.classList.add('hidden');
-        cardImage.src = '';
+        cardImage.removeAttribute('src');
     }
 
     // Handle music questions - show/hide audio player

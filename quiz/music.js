@@ -233,51 +233,45 @@ function startProgressTracking(duration) {
     }, 50);
 }
 
-// Generate tricky wrong answers
+// Generate tricky wrong answers that don't reveal the correct one
 function generateTrickyOptions(correctTrack, allTracks) {
     const correctAnswer = `${correctTrack.title} - ${correctTrack.artist}`;
     const wrongSet = new Set();
 
-    // 1. Right song, wrong artist (very tricky)
-    const otherArtists = allTracks.filter(t => t.artist !== correctTrack.artist);
-    const shuffledArtists = shuffleArray(otherArtists);
-    if (shuffledArtists.length > 0) {
-        wrongSet.add(`${correctTrack.title} - ${shuffledArtists[0].artist}`);
-    }
-    if (shuffledArtists.length > 1) {
-        wrongSet.add(`${correctTrack.title} - ${shuffledArtists[1].artist}`);
+    // Strategy: mix real tracks with max 1 swapped title and max 1 swapped artist
+    // This prevents the pattern where the correct answer is the only one with both
+    // the right title AND right artist appearing multiple times
+
+    const otherTracks = shuffleArray(allTracks.filter(t => t.id !== correctTrack.id));
+
+    // 1. ONE wrong answer with right title + wrong artist (50% chance)
+    if (Math.random() > 0.5) {
+        const otherArtist = otherTracks.find(t => t.artist !== correctTrack.artist);
+        if (otherArtist) {
+            wrongSet.add(`${correctTrack.title} - ${otherArtist.artist}`);
+        }
     }
 
-    // 2. Right artist, wrong song (tricky)
-    const sameArtist = allTracks.filter(t => t.artist === correctTrack.artist && t.id !== correctTrack.id);
-    if (sameArtist.length > 0) {
-        wrongSet.add(`${sameArtist[0].title} - ${correctTrack.artist}`);
-    }
-    const otherSongs = allTracks.filter(t => t.id !== correctTrack.id);
-    const shuffledSongs = shuffleArray(otherSongs);
-    for (const t of shuffledSongs) {
-        if (wrongSet.size >= 3) break;
-        const fake = `${t.title} - ${correctTrack.artist}`;
-        if (fake !== correctAnswer) wrongSet.add(fake);
+    // 2. ONE wrong answer with wrong title + right artist (50% chance)
+    if (Math.random() > 0.5) {
+        const otherSong = otherTracks.find(t => t.title !== correctTrack.title);
+        if (otherSong) {
+            wrongSet.add(`${otherSong.title} - ${correctTrack.artist}`);
+        }
     }
 
-    // 3. Same genre, normal wrong answers
-    const sameGenre = shuffleArray(allTracks.filter(t => t.genre === correctTrack.genre && t.id !== correctTrack.id));
-    for (const t of sameGenre) {
-        if (wrongSet.size >= 5) break;
-        const opt = `${t.title} - ${t.artist}`;
-        if (opt !== correctAnswer) wrongSet.add(opt);
-    }
+    // 3. Fill with real tracks (same genre first for difficulty)
+    const sameGenre = shuffleArray(otherTracks.filter(t => t.genre === correctTrack.genre));
+    const diffGenre = shuffleArray(otherTracks.filter(t => t.genre !== correctTrack.genre));
+    const fillPool = [...sameGenre, ...diffGenre];
 
-    // 4. Fill remaining with random tracks
-    const allOthers = shuffleArray(allTracks.filter(t => t.id !== correctTrack.id));
-    for (const t of allOthers) {
+    for (const t of fillPool) {
         if (wrongSet.size >= 7) break;
         const opt = `${t.title} - ${t.artist}`;
         if (opt !== correctAnswer) wrongSet.add(opt);
     }
 
-    return [...wrongSet].slice(0, 7);
+    return shuffleArray([...wrongSet].slice(0, 7));
 }
 
 // Generate a music question from the track DB
