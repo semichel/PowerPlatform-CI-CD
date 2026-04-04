@@ -210,12 +210,10 @@ function startProgressTracking(duration) {
 
 // Generate a music question from the track DB
 function generateMusicQuestion(correctTrack, allTracks) {
-    // Pick 3 wrong answers from same genre if possible, otherwise random
-    const sameGenre = allTracks.filter(t => t.genre === correctTrack.genre && t.id !== correctTrack.id);
+    // Pick 9 wrong answers - mix from same genre and others
     const others = allTracks.filter(t => t.id !== correctTrack.id);
-    const pool = sameGenre.length >= 3 ? sameGenre : others;
-    const shuffled = shuffleArray(pool);
-    const wrongAnswers = shuffled.slice(0, 3).map(t => `${t.title} - ${t.artist}`);
+    const shuffled = shuffleArray(others);
+    const wrongAnswers = shuffled.slice(0, 9).map(t => `${t.title} - ${t.artist}`);
     const correctAnswer = `${correctTrack.title} - ${correctTrack.artist}`;
 
     return {
