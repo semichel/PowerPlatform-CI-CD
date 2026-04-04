@@ -85,6 +85,11 @@ function updatePlayerNames() {
     }
 }
 
+// Flip screen upside down
+function toggleFlip() {
+    document.getElementById('app').classList.toggle('flipped');
+}
+
 // Reset question history
 function resetQuestionHistory() {
     localStorage.removeItem('seenQuestions');
