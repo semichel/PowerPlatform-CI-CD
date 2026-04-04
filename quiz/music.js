@@ -88,29 +88,63 @@ function getAudioContext() {
 }
 
 async function fetchDeezerPreview(trackId) {
+    // Find track info from our local DB to search by name
+    const trackInfo = MUSIC_TRACKS.find(t => t.id === trackId);
+    if (!trackInfo) {
+        Logger.log('ERROR', `Track ${trackId} inte hittad i databasen`);
+        return null;
+    }
+
+    const searchQuery = `${trackInfo.artist} ${trackInfo.title}`;
+    Logger.log('GAME', `Söker preview för: ${searchQuery}`);
+
     try {
-        // Step 1: Get track info from Deezer API (public, no auth needed)
-        const infoResp = await fetch(`https://api.deezer.com/track/${trackId}`);
-        if (!infoResp.ok) throw new Error('Failed to fetch track info');
-        const trackInfo = await infoResp.json();
+        // Step 1: Search via proxy (same as SoundWarp) - try iTunes first, then Deezer
+        let previewUrl = null;
 
-        if (!trackInfo.preview) throw new Error('No preview URL');
-        Logger.log('GAME', `Preview URL hämtad för track ${trackId}`);
+        // iTunes (usually has previews, good quality)
+        try {
+            const itunesResp = await fetch(`${PROXY_BASE}/api/itunes/search?term=${encodeURIComponent(searchQuery)}&media=music&limit=3`);
+            if (itunesResp.ok) {
+                const itunesData = await itunesResp.json();
+                const match = (itunesData.results || []).find(t => t.previewUrl);
+                if (match) {
+                    previewUrl = match.previewUrl;
+                    Logger.log('GAME', `iTunes match: ${match.trackName} - ${match.artistName}`);
+                }
+            }
+        } catch (e) {
+            Logger.log('GAME', 'iTunes sökning misslyckades, provar Deezer...');
+        }
 
-        // Step 2: Fetch audio through SoundWarp proxy (handles CORS)
-        const audioProxyUrl = `${PROXY_BASE}/api/preview?url=${encodeURIComponent(trackInfo.preview)}`;
-        const audioResp = await fetch(audioProxyUrl);
+        // Deezer fallback
+        if (!previewUrl) {
+            const deezerResp = await fetch(`${PROXY_BASE}/api/deezer/search?q=${encodeURIComponent(searchQuery)}&limit=3`);
+            if (deezerResp.ok) {
+                const deezerData = await deezerResp.json();
+                const match = (deezerData.data || []).find(t => t.preview);
+                if (match) {
+                    previewUrl = match.preview;
+                    Logger.log('GAME', `Deezer match: ${match.title} - ${match.artist.name}`);
+                }
+            }
+        }
+
+        if (!previewUrl) throw new Error('Ingen preview hittades');
+
+        // Step 2: Fetch audio through proxy (handles CORS)
+        const audioResp = await fetch(`${PROXY_BASE}/api/preview?url=${encodeURIComponent(previewUrl)}`);
         if (!audioResp.ok) throw new Error(`Proxy error: ${audioResp.status}`);
 
         const arrayBuffer = await audioResp.arrayBuffer();
-        if (arrayBuffer.byteLength === 0) throw new Error('Empty audio');
+        if (arrayBuffer.byteLength === 0) throw new Error('Tomt ljud');
 
         Logger.log('GAME', `Ljud hämtat: ${(arrayBuffer.byteLength / 1024).toFixed(0)} KB`);
 
         const ctx = getAudioContext();
         return await ctx.decodeAudioData(arrayBuffer);
     } catch (err) {
-        Logger.log('ERROR', `Kunde inte hämta ljud för track ${trackId}: ${err.message}`);
+        Logger.log('ERROR', `Kunde inte hämta ljud för "${trackInfo.title}": ${err.message}`);
         return null;
     }
 }
