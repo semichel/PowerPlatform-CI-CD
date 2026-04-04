@@ -11,6 +11,36 @@ let isOnlineGame = false;
 let myPlayerIndex = -1;
 let roundPoints = 0;
 
+// Question history - avoid repeats using localStorage
+function getQuestionKey(q) {
+    if (q.isMusic) return 'music:' + q.trackId;
+    return q.category + ':' + q.question;
+}
+
+function getSeenQuestions() {
+    try {
+        return new Set(JSON.parse(localStorage.getItem('seenQuestions') || '[]'));
+    } catch { return new Set(); }
+}
+
+function markQuestionSeen(q) {
+    const seen = getSeenQuestions();
+    seen.add(getQuestionKey(q));
+    localStorage.setItem('seenQuestions', JSON.stringify([...seen]));
+}
+
+function filterSeenQuestions(questions) {
+    const seen = getSeenQuestions();
+    const unseen = questions.filter(q => !seen.has(getQuestionKey(q)));
+    if (unseen.length === 0) {
+        Logger.log('GAME', 'Alla frågor sedda - nollställer historik!');
+        localStorage.removeItem('seenQuestions');
+        return questions;
+    }
+    Logger.log('GAME', `${unseen.length}/${questions.length} osedda frågor`);
+    return unseen;
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     renderCategoryButtons('category-buttons');
@@ -55,6 +85,13 @@ function updatePlayerNames() {
     }
 }
 
+// Reset question history
+function resetQuestionHistory() {
+    localStorage.removeItem('seenQuestions');
+    alert('Frågehistorik nollställd!');
+    Logger.log('GAME', 'Frågehistorik nollställd manuellt');
+}
+
 // Music duration setting
 function changeMusicDuration(delta) {
     musicDurationLimit = Math.max(1, Math.min(30, musicDurationLimit + delta));
@@ -75,7 +112,7 @@ function showOnlineSetup() {
 function startImageTest() {
     isOnlineGame = false;
     players = [{ name: 'Testare', score: 0 }];
-    const allImages = shuffleArray([...IMAGE_QUESTIONS]);
+    const allImages = shuffleArray(filterSeenQuestions([...IMAGE_QUESTIONS]));
     playerQuestions = [allImages];
     playerQuestionIndex = [0];
     currentPlayerIndex = 0;
@@ -112,11 +149,13 @@ function prepareAndStartGame(providedPlayerQuestions) {
         const cats = [...selectedCategories];
         const filtered = QUESTIONS.filter(q => cats.includes(q.category));
         const imageFiltered = IMAGE_QUESTIONS.filter(q => cats.includes(q.category));
-        Logger.log('GAME', `Frågor: ${filtered.length} text + ${imageFiltered.length} bild (kategorier: ${cats.join(', ')})`);
-        const allRegular = shuffleArray([...filtered, ...imageFiltered]);
+        const allPool = filterSeenQuestions([...filtered, ...imageFiltered]);
+        Logger.log('GAME', `Frågor: ${allPool.length} osedda (kategorier: ${cats.join(', ')})`);
+        const allRegular = shuffleArray(allPool);
 
         // Generate music questions matching selected categories
-        const musicQs = shuffleArray(generateMusicQuestionsForCategories(cats));
+        const allMusic = generateMusicQuestionsForCategories(cats);
+        const musicQs = shuffleArray(filterSeenQuestions(allMusic));
 
         playerQuestions = [];
         for (let i = 0; i < players.length; i++) {
@@ -308,6 +347,7 @@ function processAnswer(selectedOption) {
     const q = playerQuestions[pi][qi];
 
     const correct = selectedOption === q.answer;
+    markQuestionSeen(q);
 
     if (correct) {
         roundPoints += 2;
