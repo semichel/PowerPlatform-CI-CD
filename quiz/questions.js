@@ -154,6 +154,91 @@ const QUESTIONS = [
     { category: "Mat", question: "Vilket land kommer kebab ursprungligen ifrån?", options: ["Turkiet", "Libanon", "Irak", "Grekland"], answer: "Turkiet" },
     { category: "Mat", question: "Vad heter Thailands mest kända soppa?", options: ["Tom Yum", "Pad Thai", "Tom Kha", "Som Tam"], answer: "Tom Yum" },
     { category: "Mat", question: "Vilken böna används för att göra choklad?", options: ["Kakaoböna", "Vaniljböna", "Kaffeböna", "Sojaböna"], answer: "Kakaoböna" },
+    { category: "Mat", question: "Vad heter den koreanska fermenterade kålen?", options: ["Kimchi", "Sauerkraut", "Tsukemono", "Curtido"], answer: "Kimchi" },
+    { category: "Mat", question: "Vilken dryck görs av agave?", options: ["Tequila", "Rum", "Vodka", "Whiskey"], answer: "Tequila" },
+    { category: "Mat", question: "Vad heter den italienska deserten med mascarpone och kaffe?", options: ["Tiramisu", "Panna cotta", "Cannoli", "Gelato"], answer: "Tiramisu" },
+    { category: "Mat", question: "Vilken frukt är huvudingrediens i guacamole?", options: ["Avokado", "Lime", "Tomat", "Jalapeño"], answer: "Avokado" },
+    { category: "Mat", question: "Vad heter det japanska friterade panerade köttet?", options: ["Tonkatsu", "Tempura", "Karaage", "Yakitori"], answer: "Tonkatsu" },
+
+    // === EXTRA GEOGRAFI ===
+    { category: "Geografi", question: "Vad heter världens djupaste sjö?", options: ["Bajkalsjön", "Tanganyikasjön", "Kaspiska havet", "Victoriasjön"], answer: "Bajkalsjön" },
+    { category: "Geografi", question: "Vilken stad kallas 'Den eviga staden'?", options: ["Rom", "Aten", "Jerusalem", "Kairo"], answer: "Rom" },
+    { category: "Geografi", question: "I vilket land ligger Angkor Wat?", options: ["Kambodja", "Thailand", "Vietnam", "Laos"], answer: "Kambodja" },
+    { category: "Geografi", question: "Vilken ögrupp tillhör Hawaii?", options: ["USA", "Japan", "Nya Zeeland", "Filippinerna"], answer: "USA" },
+    { category: "Geografi", question: "Vad heter sundet mellan Sverige och Danmark?", options: ["Öresund", "Kattegatt", "Skagerrak", "Bälten"], answer: "Öresund" },
+    { category: "Geografi", question: "Vilken är Afrikas högsta berg?", options: ["Kilimanjaro", "Mount Kenya", "Ras Dashen", "Mount Meru"], answer: "Kilimanjaro" },
+
+    // === EXTRA VETENSKAP ===
+    { category: "Vetenskap", question: "Vad heter den minsta partikeln i ett grundämne?", options: ["Atom", "Molekyl", "Elektron", "Proton"], answer: "Atom" },
+    { category: "Vetenskap", question: "Vilken gas utgör mest av jordens atmosfär?", options: ["Kväve", "Syre", "Koldioxid", "Argon"], answer: "Kväve" },
+    { category: "Vetenskap", question: "Hur många tänder har en vuxen människa normalt?", options: ["32", "28", "30", "36"], answer: "32" },
+    { category: "Vetenskap", question: "Vad heter kroppens största muskel?", options: ["Gluteus maximus", "Quadriceps", "Biceps", "Latissimus dorsi"], answer: "Gluteus maximus" },
+    { category: "Vetenskap", question: "Vilken vitamin får man av solljus?", options: ["D-vitamin", "C-vitamin", "A-vitamin", "B12-vitamin"], answer: "D-vitamin" },
+    { category: "Vetenskap", question: "Vad är H2O?", options: ["Vatten", "Väteperoxid", "Saltsyra", "Kolsyra"], answer: "Vatten" },
+
+    // === EXTRA SPORT ===
+    { category: "Sport", question: "Vilket land har vunnit flest OS-guld totalt?", options: ["USA", "Kina", "Ryssland", "Storbritannien"], answer: "USA" },
+    { category: "Sport", question: "Vad heter den mest prestigefyllda cykeltävlingen?", options: ["Tour de France", "Giro d'Italia", "Vuelta a España", "Paris-Roubaix"], answer: "Tour de France" },
+    { category: "Sport", question: "Hur många hål spelas i en runda golf?", options: ["18", "9", "12", "16"], answer: "18" },
+    { category: "Sport", question: "Vilken sport kallas 'The Beautiful Game'?", options: ["Fotboll", "Tennis", "Basket", "Cricket"], answer: "Fotboll" },
+    { category: "Sport", question: "Vem har flest Grand Slam-titlar i herrtennis?", options: ["Novak Djokovic", "Rafael Nadal", "Roger Federer", "Pete Sampras"], answer: "Novak Djokovic" },
+    { category: "Sport", question: "I vilken sport tävlar man i octagon?", options: ["MMA", "Boxning", "Brottning", "Judo"], answer: "MMA" },
+
+    // === EXTRA HISTORIA ===
+    { category: "Historia", question: "Vilken civilisation byggde Machu Picchu?", options: ["Inkariket", "Aztekerna", "Mayafolket", "Olmekerna"], answer: "Inkariket" },
+    { category: "Historia", question: "Vad hette den sista drottningen av Frankrike före revolutionen?", options: ["Marie Antoinette", "Marie de Medici", "Catherine de Medici", "Josephine"], answer: "Marie Antoinette" },
+    { category: "Historia", question: "Vilket år föll Berlinmuren?", options: ["1989", "1991", "1987", "1990"], answer: "1989" },
+    { category: "Historia", question: "Vem var Romarrikets mest kände diktator?", options: ["Julius Caesar", "Augustus", "Nero", "Caligula"], answer: "Julius Caesar" },
+    { category: "Historia", question: "Vilken uppfinning revolutionerade kommunikation 1876?", options: ["Telefonen", "Telegrafen", "Radion", "Televisionen"], answer: "Telefonen" },
+    { category: "Historia", question: "Vad hette det kalla krigets rymdkapplöning?", options: ["Space Race", "Star Wars", "Apollo Project", "Sputnik Race"], answer: "Space Race" },
+
+    // === EXTRA KULTUR ===
+    { category: "Kultur", question: "Vilken konstnär klippte av sitt öra?", options: ["Vincent van Gogh", "Pablo Picasso", "Claude Monet", "Salvador Dalí"], answer: "Vincent van Gogh" },
+    { category: "Kultur", question: "Vad heter den mest sålda boken genom tiderna?", options: ["Bibeln", "Don Quijote", "Harry Potter", "Sagan om Ringen"], answer: "Bibeln" },
+    { category: "Kultur", question: "Vilken artist har sålt flest album i historien?", options: ["Elvis Presley", "Michael Jackson", "The Beatles", "Elton John"], answer: "Elvis Presley" },
+    { category: "Kultur", question: "Vad heter den japanska serietidningsgenren?", options: ["Manga", "Manhwa", "Manhua", "Anime"], answer: "Manga" },
+    { category: "Kultur", question: "Vilken app är känd för korta dansvideor?", options: ["TikTok", "Instagram", "Snapchat", "YouTube Shorts"], answer: "TikTok" },
+    { category: "Kultur", question: "Vem skrev Romeo och Julia?", options: ["William Shakespeare", "Charles Dickens", "Jane Austen", "Oscar Wilde"], answer: "William Shakespeare" },
+
+    // === EXTRA SVERIGE ===
+    { category: "Sverige", question: "Vilken svensk stad kallas 'Norrlands huvudstad'?", options: ["Umeå", "Sundsvall", "Luleå", "Gävle"], answer: "Umeå" },
+    { category: "Sverige", question: "Vad heter Sveriges äldsta stad?", options: ["Sigtuna", "Uppsala", "Birka", "Lund"], answer: "Sigtuna" },
+    { category: "Sverige", question: "Vilken svensk uppfann dynamiten?", options: ["Alfred Nobel", "Gustaf Dalén", "Baltzar von Platen", "Nils Bohlin"], answer: "Alfred Nobel" },
+    { category: "Sverige", question: "Vad heter den svenska glassbaren som grundades i Eslöv?", options: ["GB Glace", "SIA Glass", "Triumf Glass", "Hemglass"], answer: "GB Glace" },
+    { category: "Sverige", question: "Vilken svensk artist sjöng 'Sommartider'?", options: ["Gyllene Tider", "Roxette", "ABBA", "Europe"], answer: "Gyllene Tider" },
+    { category: "Sverige", question: "Hur många landskap har Sverige?", options: ["25", "21", "24", "28"], answer: "25" },
+
+    // === EXTRA SPEL ===
+    { category: "Spel", question: "Vilket spel utspelar sig i Hyrule?", options: ["The Legend of Zelda", "Final Fantasy", "Dark Souls", "Dragon Quest"], answer: "The Legend of Zelda" },
+    { category: "Spel", question: "Vad heter skaparen av Metal Gear Solid?", options: ["Hideo Kojima", "Shigeru Miyamoto", "Hidetaka Miyazaki", "Yu Suzuki"], answer: "Hideo Kojima" },
+    { category: "Spel", question: "Vilket spel har 'The Nether' som dimension?", options: ["Minecraft", "Terraria", "Roblox", "Valheim"], answer: "Minecraft" },
+    { category: "Spel", question: "Vad heter det populära kortspelet med Uno-regler?", options: ["Uno", "Skip-Bo", "Phase 10", "Dos"], answer: "Uno" },
+    { category: "Spel", question: "Vilket bilspel utvecklas av Polyphony Digital?", options: ["Gran Turismo", "Forza", "Need for Speed", "Project Cars"], answer: "Gran Turismo" },
+    { category: "Spel", question: "Vad heter bossen i varje Zelda-spel?", options: ["Ganon", "Bowser", "Sephiroth", "Ridley"], answer: "Ganon" },
+
+    // === EXTRA ANIME ===
+    { category: "Anime", question: "Vilken anime handlar om en anteckningsbok som dödar?", options: ["Death Note", "Tokyo Ghoul", "Parasyte", "Another"], answer: "Death Note" },
+    { category: "Anime", question: "Vad heter piratbåten i One Piece?", options: ["Thousand Sunny", "Going Merry", "Red Force", "Moby Dick"], answer: "Thousand Sunny" },
+    { category: "Anime", question: "Vilken anime har 'Bankai' som kraft?", options: ["Bleach", "Naruto", "Dragon Ball", "One Piece"], answer: "Bleach" },
+    { category: "Anime", question: "Vem är känd som 'Hero for Fun'?", options: ["Saitama", "Goku", "All Might", "Naruto"], answer: "Saitama" },
+    { category: "Anime", question: "Vilken anime utspelar sig i en värld av titaner?", options: ["Attack on Titan", "Claymore", "Berserk", "God Eater"], answer: "Attack on Titan" },
+    { category: "Anime", question: "Vad heter Gokus mest kända attack?", options: ["Kamehameha", "Spirit Bomb", "Final Flash", "Rasengan"], answer: "Kamehameha" },
+
+    // === EXTRA FILMER ===
+    { category: "Filmer", question: "Vilken film vann första Oscar för bästa film?", options: ["Wings", "Sunrise", "The Jazz Singer", "Ben-Hur"], answer: "Wings" },
+    { category: "Filmer", question: "Vem regisserade Jurassic Park?", options: ["Steven Spielberg", "James Cameron", "Ridley Scott", "George Lucas"], answer: "Steven Spielberg" },
+    { category: "Filmer", question: "Vilken film har citatet 'I see dead people'?", options: ["The Sixth Sense", "The Others", "Ghost", "Poltergeist"], answer: "The Sixth Sense" },
+    { category: "Filmer", question: "Vad heter AI:n i filmen Her?", options: ["Samantha", "Alexa", "Siri", "Cortana"], answer: "Samantha" },
+    { category: "Filmer", question: "Vilken Disney-film utspelar sig i Colombia?", options: ["Encanto", "Coco", "Moana", "Luca"], answer: "Encanto" },
+    { category: "Filmer", question: "Vem spelar Wolverine i X-Men?", options: ["Hugh Jackman", "Ryan Reynolds", "Chris Evans", "Robert Downey Jr."], answer: "Hugh Jackman" },
+
+    // === EXTRA SERIER ===
+    { category: "Serier", question: "Vilken serie handlar om en mexikansk drogkartell?", options: ["Narcos", "Breaking Bad", "Ozark", "Queen of the South"], answer: "Narcos" },
+    { category: "Serier", question: "Vad heter familjen i Succession?", options: ["Roy", "Murdoch", "Redstone", "Trump"], answer: "Roy" },
+    { category: "Serier", question: "Vilken serie utspelar sig i ett dystopiskt Gilead?", options: ["The Handmaid's Tale", "Westworld", "Black Mirror", "The 100"], answer: "The Handmaid's Tale" },
+    { category: "Serier", question: "Vad heter barnserien med en blå katt och en guldfisk?", options: ["Gumball", "SpongeBob", "Adventure Time", "Regular Show"], answer: "Gumball" },
+    { category: "Serier", question: "Vilken serie följer en tidresenär i en telefonkiosk?", options: ["Doctor Who", "Dark", "Loki", "Quantum Leap"], answer: "Doctor Who" },
+    { category: "Serier", question: "Vad heter dokumentärserien om Tiger King?", options: ["Tiger King", "Wild Wild Country", "Making a Murderer", "The Jinx"], answer: "Tiger King" },
 ];
 
 const CATEGORIES = [...new Set([...QUESTIONS.map(q => q.category), ...IMAGE_CATEGORIES])];

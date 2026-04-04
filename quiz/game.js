@@ -156,7 +156,7 @@ function showQuestion() {
     document.getElementById('player-turn').textContent = players[pi].name;
 
     const q = myQuestions[qi];
-    document.getElementById('card-category').textContent = q.category;
+    document.getElementById('card-category').textContent = '';
     document.getElementById('card-question').textContent = q.question;
 
     // Handle image questions
@@ -310,6 +310,9 @@ function showResult(q, correct, selectedOption) {
 
     const wo = document.getElementById('waiting-overlay');
     if (wo) wo.classList.add('hidden');
+
+    // Show category in result
+    document.getElementById('card-category').textContent = q.category;
 
     // Stop music if playing
     stopAudioPlayback();
