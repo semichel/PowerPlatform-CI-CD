@@ -134,23 +134,6 @@ function prepareAndStartGame(providedPlayerQuestions) {
         }
     }
 
-    // Assign difficulty based on number of options (more = harder)
-    // and sort: easy first, hard last
-    playerQuestions.forEach(deck => {
-        deck.forEach(q => {
-            if (!q.difficulty) {
-                const opts = q.options ? q.options.length : 4;
-                q.difficulty = opts >= 8 ? 3 : opts >= 6 ? 2 : 1;
-            }
-        });
-        // Shuffle within same difficulty, then sort by difficulty
-        const d1 = shuffleArray(deck.filter(q => q.difficulty === 1));
-        const d2 = shuffleArray(deck.filter(q => q.difficulty === 2));
-        const d3 = shuffleArray(deck.filter(q => q.difficulty === 3));
-        deck.length = 0;
-        deck.push(...d1, ...d2, ...d3);
-    });
-
     playerQuestionIndex = players.map(() => 0);
     currentPlayerIndex = 0;
     waitingForAnswer = false;
@@ -167,20 +150,8 @@ function prepareAndStartGame(providedPlayerQuestions) {
 
 function showQuestion() {
     const pi = currentPlayerIndex;
-    let qi = playerQuestionIndex[pi];
+    const qi = playerQuestionIndex[pi];
     const myQuestions = playerQuestions[pi];
-
-    // Skip ahead to harder questions based on streak
-    // 0-1 streak = difficulty 1, 2-3 streak = difficulty 2, 4+ = difficulty 3
-    const targetDifficulty = correctStreak >= 4 ? 3 : correctStreak >= 2 ? 2 : 1;
-    while (qi < myQuestions.length && myQuestions[qi].difficulty < targetDifficulty) {
-        qi++;
-    }
-    // Fall back to any remaining question if no harder ones exist
-    if (qi >= myQuestions.length) {
-        qi = playerQuestionIndex[pi];
-    }
-    playerQuestionIndex[pi] = qi;
 
     if (qi >= myQuestions.length) {
         // Auto-bank remaining round points
@@ -202,9 +173,7 @@ function showQuestion() {
     document.getElementById('player-turn').textContent = players[pi].name;
 
     const q = myQuestions[qi];
-    // Show streak indicator instead of category
-    const streakText = correctStreak >= 4 ? `${correctStreak} i rad!` : correctStreak >= 2 ? `${correctStreak} i rad` : '';
-    document.getElementById('card-category').textContent = streakText;
+    document.getElementById('card-category').textContent = '';
     document.getElementById('card-question').textContent = q.question;
 
     // Handle image questions
