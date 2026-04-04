@@ -226,15 +226,16 @@ function renderOptions(q) {
 
     const canInteract = !isOnlineGame || myPlayerIndex === currentPlayerIndex;
     const isMusic = q.isMusic;
+    const isTextOptions = typeof q.options[0] === 'string';
 
     // Shuffle options for display
     const shuffledOptions = shuffleArray(q.options);
 
     shuffledOptions.forEach(option => {
         const btn = document.createElement('button');
-        btn.className = 'option-btn' + (isMusic ? ' option-text' : '');
+        btn.className = 'option-btn' + ((isMusic || isTextOptions) ? ' option-text' : '');
         btn.textContent = option;
-        btn.dataset.value = option;
+        btn.dataset.value = String(option);
         if (canInteract && waitingForAnswer) {
             btn.onclick = () => selectAnswer(option);
         } else {
@@ -243,7 +244,7 @@ function renderOptions(q) {
         container.appendChild(btn);
     });
 
-    // For music: use single column layout
+    // Single column for music (10 options) or text options
     if (isMusic) {
         container.classList.add('options-single-col');
     } else {
@@ -301,11 +302,11 @@ function showResult(q, correct, selectedOption) {
     // Highlight correct/wrong in option buttons
     const optionBtns = document.querySelectorAll('.option-btn');
     optionBtns.forEach(btn => {
-        const val = q.isMusic ? btn.dataset.value : parseInt(btn.textContent);
+        const val = btn.dataset.value;
         btn.onclick = null;
-        if (val === q.answer || val === String(q.answer)) {
+        if (val === String(q.answer)) {
             btn.classList.add('correct');
-        } else if ((val === selectedOption || val === String(selectedOption)) && !correct) {
+        } else if (val === String(selectedOption) && !correct) {
             btn.classList.add('wrong');
         }
         btn.classList.add('disabled');
