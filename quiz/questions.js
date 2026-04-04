@@ -137,6 +137,23 @@ const QUESTIONS = [
     { category: "Serier", question: "Vad heter den koreanska serien om överlevnad på Netflix?", options: ["Squid Game", "All of Us Are Dead", "Sweet Home", "Kingdom"], answer: "Squid Game" },
     { category: "Serier", question: "Vilken serie följer familjen Shelby i Birmingham?", options: ["Peaky Blinders", "Downton Abbey", "The Crown", "Taboo"], answer: "Peaky Blinders" },
     { category: "Serier", question: "Vad heter Geralt i The Witcher?", options: ["Geralt av Rivia", "Geralt av Kaer Morhen", "Geralt av Nilfgaard", "Geralt av Cintra"], answer: "Geralt av Rivia" },
+
+    // === MAT ===
+    { category: "Mat", question: "Vilket land kommer sushi ursprungligen ifrån?", options: ["Japan", "Kina", "Thailand", "Sydkorea"], answer: "Japan" },
+    { category: "Mat", question: "Vad heter den italienska rätten med tunn degbotten, tomatsås och ost?", options: ["Pizza", "Calzone", "Focaccia", "Bruschetta"], answer: "Pizza" },
+    { category: "Mat", question: "Vilken krydda ger saffranspannkaka sin gula färg?", options: ["Saffran", "Gurkmeja", "Curry", "Paprika"], answer: "Saffran" },
+    { category: "Mat", question: "Vad heter den franska rätten med sniglar?", options: ["Escargot", "Ratatouille", "Bouillabaisse", "Cassoulet"], answer: "Escargot" },
+    { category: "Mat", question: "Vilket land är känt för tacos?", options: ["Mexiko", "Spanien", "Argentina", "Brasilien"], answer: "Mexiko" },
+    { category: "Mat", question: "Vad heter den japanska soppan med nudlar och buljong?", options: ["Ramen", "Udon", "Soba", "Miso"], answer: "Ramen" },
+    { category: "Mat", question: "Vilken frukt kallas 'Kung av frukter' i Sydostasien?", options: ["Durian", "Mango", "Jackfruit", "Papaya"], answer: "Durian" },
+    { category: "Mat", question: "Vad heter den indiska rätten med kryddad gryta och ris?", options: ["Biryani", "Tikka Masala", "Vindaloo", "Korma"], answer: "Biryani" },
+    { category: "Mat", question: "Vilket land kommer croissanten ursprungligen ifrån?", options: ["Österrike", "Frankrike", "Belgien", "Schweiz"], answer: "Österrike" },
+    { category: "Mat", question: "Vad heter den grekiska rätten med aubergine och köttfärs?", options: ["Moussaka", "Gyros", "Souvlaki", "Tzatziki"], answer: "Moussaka" },
+    { category: "Mat", question: "Vilken ost har hål i sig?", options: ["Emmentaler", "Gouda", "Brie", "Cheddar"], answer: "Emmentaler" },
+    { category: "Mat", question: "Vad är wasabi?", options: ["Japansk pepparrot", "Sjögräs", "Fermenterad soja", "Chili"], answer: "Japansk pepparrot" },
+    { category: "Mat", question: "Vilket land kommer kebab ursprungligen ifrån?", options: ["Turkiet", "Libanon", "Irak", "Grekland"], answer: "Turkiet" },
+    { category: "Mat", question: "Vad heter Thailands mest kända soppa?", options: ["Tom Yum", "Pad Thai", "Tom Kha", "Som Tam"], answer: "Tom Yum" },
+    { category: "Mat", question: "Vilken böna används för att göra choklad?", options: ["Kakaoböna", "Vaniljböna", "Kaffeböna", "Sojaböna"], answer: "Kakaoböna" },
 ];
 
 const CATEGORIES = [...new Set([...QUESTIONS.map(q => q.category), ...IMAGE_CATEGORIES]), 'Musik'];

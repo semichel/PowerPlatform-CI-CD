@@ -118,6 +118,28 @@ const IMAGE_QUESTIONS = [
       options: ["Månen", "Merkurius", "Mars", "Pluto"], answer: "Månen" },
     { category: "Vetenskap", question: "Vilken planet är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Saturn_during_Equinox.jpg/300px-Saturn_during_Equinox.jpg",
       options: ["Saturnus", "Jupiter", "Uranus", "Neptunus"], answer: "Saturnus" },
+
+    // === MAT (bilder) ===
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Eq_it-na_pizza-margherita_sep2005_sml.jpg/280px-Eq_it-na_pizza-margherita_sep2005_sml.jpg",
+      options: ["Pizza Margherita", "Focaccia", "Pizza Marinara", "Calzone"], answer: "Pizza Margherita" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Big_Mac_hamburger.jpg/280px-Big_Mac_hamburger.jpg",
+      options: ["Big Mac", "Whopper", "Quarter Pounder", "Cheeseburger"], answer: "Big Mac" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sushi_platter.jpg/320px-Sushi_platter.jpg",
+      options: ["Sushi", "Sashimi", "Onigiri", "Maki"], answer: "Sushi" },
+    { category: "Mat", question: "Vilken frukt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Durian.jpg/280px-Durian.jpg",
+      options: ["Durian", "Jackfruit", "Brödfruktsträd", "Cherimoya"], answer: "Durian" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Paella_mixta.jpg/300px-Paella_mixta.jpg",
+      options: ["Paella", "Risotto", "Jambalaya", "Biryani"], answer: "Paella" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Spaghetti_Bolognese_mit_Parmesan_oder_Grana_Padano.jpg/280px-Spaghetti_Bolognese_mit_Parmesan_oder_Grana_Padano.jpg",
+      options: ["Spaghetti Bolognese", "Spaghetti Carbonara", "Pasta Pomodoro", "Linguine al Ragu"], answer: "Spaghetti Bolognese" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Pad_Thai.jpg/280px-Pad_Thai.jpg",
+      options: ["Pad Thai", "Lo Mein", "Chow Mein", "Yakisoba"], answer: "Pad Thai" },
+    { category: "Mat", question: "Vilken bakverk är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Croissant%2C_June_2010.jpg/280px-Croissant%2C_June_2010.jpg",
+      options: ["Croissant", "Pain au chocolat", "Brioche", "Danish"], answer: "Croissant" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Falafel_balls.jpg/280px-Falafel_balls.jpg",
+      options: ["Falafel", "Arancini", "Kibbeh", "Croquetas"], answer: "Falafel" },
+    { category: "Mat", question: "Vilken rätt är detta?", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Supreme_pizza.jpg/280px-Supreme_pizza.jpg",
+      options: ["Supreme Pizza", "Pizza Margherita", "Pepperoni Pizza", "Hawaiian Pizza"], answer: "Supreme Pizza" },
 ];
 
 const IMAGE_CATEGORIES = [...new Set(IMAGE_QUESTIONS.map(q => q.category))];
