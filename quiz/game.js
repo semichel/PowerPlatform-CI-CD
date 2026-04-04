@@ -64,6 +64,21 @@ function showOnlineSetup() {
     showScreen('online-setup');
 }
 
+// Test image questions only
+function startImageTest() {
+    isOnlineGame = false;
+    players = [{ name: 'Testare', score: 0 }];
+    const allImages = shuffleArray([...IMAGE_QUESTIONS]);
+    playerQuestions = [allImages];
+    playerQuestionIndex = [0];
+    currentPlayerIndex = 0;
+    waitingForAnswer = false;
+    roundPoints = 0;
+    Logger.log('GAME', `Bildtest startat! ${allImages.length} bildfrågor`);
+    showScreen('game-screen');
+    showQuestion();
+}
+
 // Start Local Game
 function startLocalGame() {
     if (selectedCategories.size === 0) {
