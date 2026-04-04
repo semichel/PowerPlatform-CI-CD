@@ -10,7 +10,6 @@ let waitingForAnswer = false;
 let isOnlineGame = false;
 let myPlayerIndex = -1;
 let roundPoints = 0;
-let correctStreak = 0; // rätt svar i rad för nuvarande spelare
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -138,7 +137,6 @@ function prepareAndStartGame(providedPlayerQuestions) {
     currentPlayerIndex = 0;
     waitingForAnswer = false;
     roundPoints = 0;
-    correctStreak = 0;
 
     const playerNames = players.map(p => p.name).join(', ');
     const totalQ = playerQuestions.reduce((sum, pq) => sum + pq.length, 0);
@@ -305,11 +303,9 @@ function processAnswer(selectedOption) {
     const correct = selectedOption === q.answer;
 
     if (correct) {
-        correctStreak++;
         roundPoints += 2;
-        Logger.log('PLAYER', `${players[pi].name} RÄTT "${q.question}" (${q.answer}) | Streak: ${correctStreak} | Riskerar: ${roundPoints}p`);
+        Logger.log('PLAYER', `${players[pi].name} RÄTT "${q.question}" (${q.answer}) | Riskerar: ${roundPoints}p`);
     } else {
-        correctStreak = 0;
         Logger.log('PLAYER', `${players[pi].name} FEL "${q.question}" svarade ${selectedOption}, rätt: ${q.answer} | Förlorade ${roundPoints}p`);
         roundPoints = 0;
     }
@@ -430,7 +426,6 @@ function nextTurn() {
 function goToNextPlayer() {
     playerQuestionIndex[currentPlayerIndex]++;
     roundPoints = 0;
-    correctStreak = 0;
 
     let tried = 0;
     do {
