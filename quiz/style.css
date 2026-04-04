@@ -46,6 +46,12 @@ body {
     margin-top: 6px;
 }
 
+.version {
+    font-size: 0.75rem;
+    color: #606080;
+    margin-top: 8px;
+}
+
 /* Buttons */
 .btn-primary {
     background: linear-gradient(135deg, #e94560, #c23152);
