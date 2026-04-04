@@ -150,4 +150,4 @@ const QUESTIONS = [
     { category: "Serier", question: "Vilket år hade House of the Dragon premiär?", options: [2021, 2022, 2023, 2020], answer: 2022 }
 ];
 
-const CATEGORIES = [...new Set(QUESTIONS.map(q => q.category))];
+const CATEGORIES = [...new Set(QUESTIONS.map(q => q.category)), 'Musik'];

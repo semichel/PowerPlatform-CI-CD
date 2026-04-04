@@ -6,6 +6,7 @@
     <title>Frågesport - Testa dina kunskaper!</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="music.js"></script>
 </head>
 <body>
     <div id="app">
@@ -109,6 +110,14 @@
             <div class="question-card">
                 <div class="card-category" id="card-category"></div>
                 <div class="card-question" id="card-question"></div>
+            </div>
+
+            <div id="audio-player" class="audio-player hidden">
+                <button class="btn-play" id="play-btn" onclick="toggleAudioPlayback()">&#9654; Spela</button>
+                <div class="audio-progress">
+                    <div class="audio-progress-bar" id="audio-progress-bar"></div>
+                </div>
+                <div class="audio-status" id="audio-status"></div>
             </div>
 
             <div class="options-grid" id="options-container"></div>

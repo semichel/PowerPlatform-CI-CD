@@ -87,13 +87,29 @@ function prepareAndStartGame(providedPlayerQuestions) {
     if (providedPlayerQuestions) {
         playerQuestions = providedPlayerQuestions;
     } else {
-        const filtered = QUESTIONS.filter(q => selectedCategories.has(q.category));
+        const wantsMusic = selectedCategories.has('Musik');
+        const otherCategories = [...selectedCategories].filter(c => c !== 'Musik');
+        const filtered = QUESTIONS.filter(q => otherCategories.includes(q.category));
         const shuffled = shuffleArray(filtered);
+
+        // Generate music questions if selected
+        const musicQs = wantsMusic ? generateMusicQuestions(players.length * 3) : [];
+        const shuffledMusic = shuffleArray(musicQs);
 
         playerQuestions = [];
         for (let i = 0; i < players.length; i++) {
             const start = i * QUESTIONS_PER_PLAYER;
-            const playerCards = shuffled.slice(start, start + QUESTIONS_PER_PLAYER);
+            let playerCards = shuffled.slice(start, start + QUESTIONS_PER_PLAYER);
+
+            // Mix in music questions (replace some regular ones)
+            if (wantsMusic && shuffledMusic.length > 0) {
+                const musicPerPlayer = Math.min(3, shuffledMusic.length);
+                const myMusic = shuffledMusic.splice(0, musicPerPlayer);
+                // Replace last N questions with music questions
+                const regularCount = QUESTIONS_PER_PLAYER - musicPerPlayer;
+                playerCards = playerCards.slice(0, regularCount);
+                playerCards = shuffleArray([...playerCards, ...myMusic]);
+            }
 
             if (playerCards.length < 1) {
                 alert('Inte tillräckligt med frågor för alla spelare!');
@@ -144,6 +160,30 @@ function showQuestion() {
     document.getElementById('card-category').textContent = q.category;
     document.getElementById('card-question').textContent = q.question;
 
+    // Handle music questions - show/hide audio player
+    const audioPlayer = document.getElementById('audio-player');
+    if (q.isMusic) {
+        audioPlayer.classList.remove('hidden');
+        document.getElementById('audio-status').textContent = 'Laddar ljud...';
+        document.getElementById('audio-progress-bar').style.width = '0%';
+        stopAudioPlayback();
+        currentAudioBuffer = null;
+
+        fetchDeezerPreview(q.trackId).then(buffer => {
+            if (buffer) {
+                currentAudioBuffer = buffer;
+                document.getElementById('audio-status').textContent = 'Tryck Spela för att lyssna!';
+                Logger.log('GAME', `Ljud laddat för: ${q.answer}`);
+            } else {
+                document.getElementById('audio-status').textContent = 'Kunde inte ladda ljud';
+            }
+        });
+    } else {
+        audioPlayer.classList.add('hidden');
+        stopAudioPlayback();
+        currentAudioBuffer = null;
+    }
+
     // Show round points info
     const roundInfo = document.getElementById('round-points');
     if (roundInfo) {
@@ -185,14 +225,16 @@ function renderOptions(q) {
     container.innerHTML = '';
 
     const canInteract = !isOnlineGame || myPlayerIndex === currentPlayerIndex;
+    const isMusic = q.isMusic;
 
     // Shuffle options for display
     const shuffledOptions = shuffleArray(q.options);
 
     shuffledOptions.forEach(option => {
         const btn = document.createElement('button');
-        btn.className = 'option-btn';
+        btn.className = 'option-btn' + (isMusic ? ' option-text' : '');
         btn.textContent = option;
+        btn.dataset.value = option;
         if (canInteract && waitingForAnswer) {
             btn.onclick = () => selectAnswer(option);
         } else {
@@ -200,6 +242,13 @@ function renderOptions(q) {
         }
         container.appendChild(btn);
     });
+
+    // For music: use single column layout
+    if (isMusic) {
+        container.classList.add('options-single-col');
+    } else {
+        container.classList.remove('options-single-col');
+    }
 }
 
 function selectAnswer(selectedOption) {
@@ -246,21 +295,24 @@ function showResult(q, correct, selectedOption) {
     const wo = document.getElementById('waiting-overlay');
     if (wo) wo.classList.add('hidden');
 
+    // Stop music if playing
+    stopAudioPlayback();
+
     // Highlight correct/wrong in option buttons
     const optionBtns = document.querySelectorAll('.option-btn');
     optionBtns.forEach(btn => {
-        const val = parseInt(btn.textContent);
+        const val = q.isMusic ? btn.dataset.value : parseInt(btn.textContent);
         btn.onclick = null;
-        if (val === q.answer) {
+        if (val === q.answer || val === String(q.answer)) {
             btn.classList.add('correct');
-        } else if (val === selectedOption && !correct) {
+        } else if ((val === selectedOption || val === String(selectedOption)) && !correct) {
             btn.classList.add('wrong');
         }
         btn.classList.add('disabled');
     });
 
     if (correct) {
-        resultText.textContent = `Rätt! Svaret är ${q.answer}.`;
+        resultText.textContent = q.isMusic ? `Rätt! Det var ${q.answer}.` : `Rätt! Svaret är ${q.answer}.`;
         resultPoints.textContent = `${roundPoints}p på spel`;
         resultPoints.className = 'points-perfect';
 
@@ -269,7 +321,9 @@ function showResult(q, correct, selectedOption) {
         if (stopBtn) stopBtn.classList.toggle('hidden', !canControl);
         if (nextBtn) nextBtn.classList.add('hidden');
     } else {
-        resultText.textContent = `Fel! Rätt svar är ${q.answer}. Du förlorade alla poäng från rundan!`;
+        resultText.textContent = q.isMusic
+            ? `Fel! Rätt svar var ${q.answer}. Du förlorade alla poäng från rundan!`
+            : `Fel! Rätt svar är ${q.answer}. Du förlorade alla poäng från rundan!`;
         resultPoints.textContent = '0 poäng';
         resultPoints.className = 'points-far';
 
@@ -390,6 +444,8 @@ function endGame() {
 
 function resetGame() {
     Logger.log('GAME', 'Tillbaka till start');
+    stopAudioPlayback();
+    currentAudioBuffer = null;
     playerQuestions = [];
     playerQuestionIndex = [];
     isOnlineGame = false;
