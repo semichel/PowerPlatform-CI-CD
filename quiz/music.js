@@ -208,13 +208,57 @@ function startProgressTracking(duration) {
     }, 50);
 }
 
+// Generate tricky wrong answers
+function generateTrickyOptions(correctTrack, allTracks) {
+    const correctAnswer = `${correctTrack.title} - ${correctTrack.artist}`;
+    const wrongSet = new Set();
+
+    // 1. Right song, wrong artist (very tricky)
+    const otherArtists = allTracks.filter(t => t.artist !== correctTrack.artist);
+    const shuffledArtists = shuffleArray(otherArtists);
+    if (shuffledArtists.length > 0) {
+        wrongSet.add(`${correctTrack.title} - ${shuffledArtists[0].artist}`);
+    }
+    if (shuffledArtists.length > 1) {
+        wrongSet.add(`${correctTrack.title} - ${shuffledArtists[1].artist}`);
+    }
+
+    // 2. Right artist, wrong song (tricky)
+    const sameArtist = allTracks.filter(t => t.artist === correctTrack.artist && t.id !== correctTrack.id);
+    if (sameArtist.length > 0) {
+        wrongSet.add(`${sameArtist[0].title} - ${correctTrack.artist}`);
+    }
+    const otherSongs = allTracks.filter(t => t.id !== correctTrack.id);
+    const shuffledSongs = shuffleArray(otherSongs);
+    for (const t of shuffledSongs) {
+        if (wrongSet.size >= 3) break;
+        const fake = `${t.title} - ${correctTrack.artist}`;
+        if (fake !== correctAnswer) wrongSet.add(fake);
+    }
+
+    // 3. Same genre, normal wrong answers
+    const sameGenre = shuffleArray(allTracks.filter(t => t.genre === correctTrack.genre && t.id !== correctTrack.id));
+    for (const t of sameGenre) {
+        if (wrongSet.size >= 5) break;
+        const opt = `${t.title} - ${t.artist}`;
+        if (opt !== correctAnswer) wrongSet.add(opt);
+    }
+
+    // 4. Fill remaining with random tracks
+    const allOthers = shuffleArray(allTracks.filter(t => t.id !== correctTrack.id));
+    for (const t of allOthers) {
+        if (wrongSet.size >= 7) break;
+        const opt = `${t.title} - ${t.artist}`;
+        if (opt !== correctAnswer) wrongSet.add(opt);
+    }
+
+    return [...wrongSet].slice(0, 7);
+}
+
 // Generate a music question from the track DB
 function generateMusicQuestion(correctTrack, allTracks) {
-    // Pick 3 wrong answers - mix from same genre and others
-    const others = allTracks.filter(t => t.id !== correctTrack.id);
-    const shuffled = shuffleArray(others);
-    const wrongAnswers = shuffled.slice(0, 3).map(t => `${t.title} - ${t.artist}`);
     const correctAnswer = `${correctTrack.title} - ${correctTrack.artist}`;
+    const wrongAnswers = generateTrickyOptions(correctTrack, allTracks);
 
     return {
         category: 'Musik',
