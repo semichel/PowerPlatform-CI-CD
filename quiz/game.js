@@ -10,6 +10,7 @@ let waitingForAnswer = false;
 let isOnlineGame = false;
 let myPlayerIndex = -1;
 let roundPoints = 0;
+let correctStreak = 0; // rätt svar i rad för nuvarande spelare
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -133,10 +134,28 @@ function prepareAndStartGame(providedPlayerQuestions) {
         }
     }
 
+    // Assign difficulty based on number of options (more = harder)
+    // and sort: easy first, hard last
+    playerQuestions.forEach(deck => {
+        deck.forEach(q => {
+            if (!q.difficulty) {
+                const opts = q.options ? q.options.length : 4;
+                q.difficulty = opts >= 8 ? 3 : opts >= 6 ? 2 : 1;
+            }
+        });
+        // Shuffle within same difficulty, then sort by difficulty
+        const d1 = shuffleArray(deck.filter(q => q.difficulty === 1));
+        const d2 = shuffleArray(deck.filter(q => q.difficulty === 2));
+        const d3 = shuffleArray(deck.filter(q => q.difficulty === 3));
+        deck.length = 0;
+        deck.push(...d1, ...d2, ...d3);
+    });
+
     playerQuestionIndex = players.map(() => 0);
     currentPlayerIndex = 0;
     waitingForAnswer = false;
     roundPoints = 0;
+    correctStreak = 0;
 
     const playerNames = players.map(p => p.name).join(', ');
     const totalQ = playerQuestions.reduce((sum, pq) => sum + pq.length, 0);
@@ -148,8 +167,20 @@ function prepareAndStartGame(providedPlayerQuestions) {
 
 function showQuestion() {
     const pi = currentPlayerIndex;
-    const qi = playerQuestionIndex[pi];
+    let qi = playerQuestionIndex[pi];
     const myQuestions = playerQuestions[pi];
+
+    // Skip ahead to harder questions based on streak
+    // 0-1 streak = difficulty 1, 2-3 streak = difficulty 2, 4+ = difficulty 3
+    const targetDifficulty = correctStreak >= 4 ? 3 : correctStreak >= 2 ? 2 : 1;
+    while (qi < myQuestions.length && myQuestions[qi].difficulty < targetDifficulty) {
+        qi++;
+    }
+    // Fall back to any remaining question if no harder ones exist
+    if (qi >= myQuestions.length) {
+        qi = playerQuestionIndex[pi];
+    }
+    playerQuestionIndex[pi] = qi;
 
     if (qi >= myQuestions.length) {
         // Auto-bank remaining round points
@@ -171,7 +202,9 @@ function showQuestion() {
     document.getElementById('player-turn').textContent = players[pi].name;
 
     const q = myQuestions[qi];
-    document.getElementById('card-category').textContent = '';
+    // Show streak indicator instead of category
+    const streakText = correctStreak >= 4 ? `${correctStreak} i rad!` : correctStreak >= 2 ? `${correctStreak} i rad` : '';
+    document.getElementById('card-category').textContent = streakText;
     document.getElementById('card-question').textContent = q.question;
 
     // Handle image questions
@@ -303,9 +336,11 @@ function processAnswer(selectedOption) {
     const correct = selectedOption === q.answer;
 
     if (correct) {
+        correctStreak++;
         roundPoints += 2;
-        Logger.log('PLAYER', `${players[pi].name} RÄTT "${q.question}" (${q.answer}) | Riskerar: ${roundPoints}p`);
+        Logger.log('PLAYER', `${players[pi].name} RÄTT "${q.question}" (${q.answer}) | Streak: ${correctStreak} | Riskerar: ${roundPoints}p`);
     } else {
+        correctStreak = 0;
         Logger.log('PLAYER', `${players[pi].name} FEL "${q.question}" svarade ${selectedOption}, rätt: ${q.answer} | Förlorade ${roundPoints}p`);
         roundPoints = 0;
     }
@@ -426,6 +461,7 @@ function nextTurn() {
 function goToNextPlayer() {
     playerQuestionIndex[currentPlayerIndex]++;
     roundPoints = 0;
+    correctStreak = 0;
 
     let tried = 0;
     do {

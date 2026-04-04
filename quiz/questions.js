@@ -239,6 +239,43 @@ const QUESTIONS = [
     { category: "Serier", question: "Vad heter barnserien med en blå katt och en guldfisk?", options: ["Gumball", "SpongeBob", "Adventure Time", "Regular Show"], answer: "Gumball" },
     { category: "Serier", question: "Vilken serie följer en tidresenär i en telefonkiosk?", options: ["Doctor Who", "Dark", "Loki", "Quantum Leap"], answer: "Doctor Who" },
     { category: "Serier", question: "Vad heter dokumentärserien om Tiger King?", options: ["Tiger King", "Wild Wild Country", "Making a Murderer", "The Jinx"], answer: "Tiger King" },
+
+    // === SVÅRA FRÅGOR (6 alternativ = difficulty 2) ===
+    { category: "Geografi", question: "Vad heter huvudstaden i Myanmar?", options: ["Naypyidaw", "Rangoon", "Mandalay", "Bangkok", "Vientiane", "Phnom Penh"], answer: "Naypyidaw" },
+    { category: "Geografi", question: "Vilken är världens minsta land till ytan?", options: ["Vatikanstaten", "Monaco", "San Marino", "Liechtenstein", "Malta", "Andorra"], answer: "Vatikanstaten" },
+    { category: "Geografi", question: "Genom hur många länder rinner Donau?", options: ["10", "7", "8", "12", "6", "9"], answer: "10" },
+    { category: "Vetenskap", question: "Vad heter det kemiska tecknet för kvicksilver?", options: ["Hg", "Qs", "Kv", "Mg", "Ag", "Pb"], answer: "Hg" },
+    { category: "Vetenskap", question: "Vilken är den hårdaste mineralen på Mohs skala?", options: ["Diamant", "Korund", "Topas", "Kvarts", "Rubin", "Safir"], answer: "Diamant" },
+    { category: "Vetenskap", question: "Hur många hjärtrum har ett krokodilhjärta?", options: ["4", "2", "3", "5", "1", "6"], answer: "4" },
+    { category: "Sport", question: "Hur många perioder spelas i en ishockeymatch?", options: ["3", "2", "4", "5", "6", "Halvlekar"], answer: "3" },
+    { category: "Sport", question: "Vilken fotbollsspelare kallas 'El Pibe de Oro'?", options: ["Maradona", "Pelé", "Messi", "Ronaldo", "Neymar", "Zidane"], answer: "Maradona" },
+    { category: "Historia", question: "Vilken kejsare byggde Kinas terrakottaarmé?", options: ["Qin Shi Huang", "Liu Bang", "Wu Zetian", "Kangxi", "Kublai Khan", "Genghis Khan"], answer: "Qin Shi Huang" },
+    { category: "Historia", question: "Vilket år grundades FN?", options: ["1945", "1948", "1942", "1950", "1939", "1946"], answer: "1945" },
+    { category: "Kultur", question: "Vem skrev 1984?", options: ["George Orwell", "Aldous Huxley", "Ray Bradbury", "Franz Kafka", "H.G. Wells", "Arthur C. Clarke"], answer: "George Orwell" },
+    { category: "Kultur", question: "Vilken konstnär är känd för 'Stjärnenatten'?", options: ["Vincent van Gogh", "Claude Monet", "Edvard Munch", "Pablo Picasso", "Salvador Dalí", "Gustav Klimt"], answer: "Vincent van Gogh" },
+    { category: "Sverige", question: "Vilken svensk stad har Sveriges äldsta universitet?", options: ["Uppsala", "Lund", "Stockholm", "Göteborg", "Linköping", "Umeå"], answer: "Uppsala" },
+    { category: "Spel", question: "Vilket företag utvecklade Dark Souls?", options: ["FromSoftware", "Capcom", "Konami", "Bandai Namco", "Square Enix", "CD Projekt"], answer: "FromSoftware" },
+    { category: "Anime", question: "Vilken Ghibli-film handlar om en flicka i en andevärld?", options: ["Spirited Away", "Princess Mononoke", "Howl's Moving Castle", "My Neighbor Totoro", "Ponyo", "Kiki's Delivery Service"], answer: "Spirited Away" },
+    { category: "Filmer", question: "Vilken regissör är känd för 'plot twists' som i The Sixth Sense?", options: ["M. Night Shyamalan", "Christopher Nolan", "David Fincher", "Denis Villeneuve", "Darren Aronofsky", "Jordan Peele"], answer: "M. Night Shyamalan" },
+    { category: "Serier", question: "Vilken serie handlar om en koreansk överlevnadstävling med barnlekar?", options: ["Squid Game", "Alice in Borderland", "All of Us Are Dead", "Sweet Home", "Kingdom", "Hellbound"], answer: "Squid Game" },
+    { category: "Mat", question: "Vilken ört används traditionellt i pesto?", options: ["Basilika", "Oregano", "Persilja", "Koriander", "Timjan", "Rosmarin"], answer: "Basilika" },
+
+    // === MYCKET SVÅRA FRÅGOR (8 alternativ = difficulty 3) ===
+    { category: "Geografi", question: "Vad heter huvudstaden i Burkina Faso?", options: ["Ouagadougou", "Bamako", "Niamey", "Lomé", "Accra", "Abidjan", "Dakar", "Conakry"], answer: "Ouagadougou" },
+    { category: "Geografi", question: "Vilken sjö är Afrikas största?", options: ["Victoriasjön", "Tanganyikasjön", "Malawisjön", "Turkanasjön", "Albertsjön", "Nassasjön", "Chadsjön", "Kivusjön"], answer: "Victoriasjön" },
+    { category: "Vetenskap", question: "Vad heter det tyngsta naturliga grundämnet?", options: ["Uran", "Plutonium", "Bly", "Guld", "Kvicksilver", "Osmium", "Wolfram", "Radium"], answer: "Uran" },
+    { category: "Vetenskap", question: "Vilken är den vanligaste blodtypen i världen?", options: ["O+", "A+", "B+", "AB+", "O-", "A-", "B-", "AB-"], answer: "O+" },
+    { category: "Sport", question: "Vilken nation har flest VM-titlar i cricket?", options: ["Australien", "Indien", "England", "Västindien", "Pakistan", "Sri Lanka", "Sydafrika", "Nya Zeeland"], answer: "Australien" },
+    { category: "Sport", question: "Vem vann Ballon d'Or flest gånger?", options: ["Lionel Messi", "Cristiano Ronaldo", "Johan Cruyff", "Michel Platini", "Marco van Basten", "Zinedine Zidane", "Ronaldo Nazário", "Luka Modrić"], answer: "Lionel Messi" },
+    { category: "Historia", question: "Vilken dynasti styrde Kina längst?", options: ["Zhou-dynastin", "Han-dynastin", "Tang-dynastin", "Ming-dynastin", "Qing-dynastin", "Song-dynastin", "Sui-dynastin", "Yuan-dynastin"], answer: "Zhou-dynastin" },
+    { category: "Historia", question: "Vilket slag anses vara Napoleon's slutgiltiga nederlag?", options: ["Waterloo", "Leipzig", "Austerlitz", "Borodino", "Trafalgar", "Jena", "Wagram", "Marengo"], answer: "Waterloo" },
+    { category: "Kultur", question: "Vilken författare skrev 'Hundra år av ensamhet'?", options: ["Gabriel García Márquez", "Isabel Allende", "Jorge Luis Borges", "Mario Vargas Llosa", "Pablo Neruda", "Julio Cortázar", "Carlos Fuentes", "Octavio Paz"], answer: "Gabriel García Márquez" },
+    { category: "Sverige", question: "Vilken svensk vetenskapsman uppfann Celsiusskalan?", options: ["Anders Celsius", "Carl von Linné", "Emanuel Swedenborg", "Jöns Jacob Berzelius", "Alfred Nobel", "Svante Arrhenius", "Ångström", "Scheele"], answer: "Anders Celsius" },
+    { category: "Spel", question: "Vilket år släpptes det allra första The Legend of Zelda?", options: ["1986", "1985", "1987", "1988", "1984", "1989", "1990", "1983"], answer: "1986" },
+    { category: "Anime", question: "Vilken mangaka skapade One Piece?", options: ["Eiichiro Oda", "Masashi Kishimoto", "Akira Toriyama", "Tite Kubo", "Hajime Isayama", "Yoshihiro Togashi", "Hiromu Arakawa", "Takehiko Inoue"], answer: "Eiichiro Oda" },
+    { category: "Filmer", question: "Vilken film har den högsta intjäningen genom tiderna (oinflationsjusterat)?", options: ["Avatar", "Avengers: Endgame", "Titanic", "Star Wars: The Force Awakens", "Avengers: Infinity War", "Spider-Man: No Way Home", "Jurassic World", "The Lion King"], answer: "Avatar" },
+    { category: "Serier", question: "Vilken showrunner skapade Breaking Bad?", options: ["Vince Gilligan", "David Chase", "Shonda Rhimes", "Ryan Murphy", "David Simon", "Matthew Weiner", "Damon Lindelof", "Sam Esmail"], answer: "Vince Gilligan" },
+    { category: "Mat", question: "Vilken peppar mäts högst på Scoville-skalan?", options: ["Carolina Reaper", "Trinidad Scorpion", "Ghost Pepper", "Habanero", "Jalapeño", "Cayenne", "Scotch Bonnet", "Thai Chili"], answer: "Carolina Reaper" },
 ];
 
 const CATEGORIES = [...new Set([...QUESTIONS.map(q => q.category), ...IMAGE_CATEGORIES])];
