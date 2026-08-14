@@ -1,9 +1,13 @@
 // Bygger frågor från karaktärsdatan i characters.js
 // Varje fråga visar en bild och fyra tydligt olika namnalternativ.
 // De tre felaktiga är påhittade namn - varken det rätta namnet i felstavad
-// form eller namnet på någon annan riktig figur. De sätts ihop av stavelser
-// från riktiga namn så att de låter trovärdiga: bara ett av de fyra namnen
-// finns på riktigt, och man måste veta vilket.
+// form eller namnet på någon annan riktig figur.
+//
+// Namnen sätts ihop av stavelser från Pokémon av SAMMA TYP som den rätta.
+// Annars går frågan att lösa utan att kunna namnet: en elfigur som heter
+// Electabuzz avslöjar sig direkt om de andra tre låter som blomsterfigurer.
+// Elfiguren får därför sällskap av namn byggda på Voltorb, Magnemite och
+// Zapdos, så att alla fyra låter lika elektriska.
 
 const WRONG_OPTIONS = 3; // tre påhittade namn + rätt svar = fyra alternativ
 
@@ -48,19 +52,29 @@ const VALID_ONSET = /^(?:[bcdfgklpst]r|[bcfgkps]l|ch|sh|th|wh|sc|sk|sm|sn|sp|st|
 
 // Ett hopsatt namn måste gå att uttala. Utan den här kontrollen blir det
 // "Ctrogeonsey" och "Rseavistoi" när två konsonantkluster hamnar bredvid varandra.
+// Ändelser som känns naturliga att sluta ett namn på
+const VALID_ENDING = /(?:[aeiouy]|[bcdfgklmnprstxz]|ck|ng|nd|nt|rd|rk|rn|sh|st|th|ff|ll|ss|zz)$/;
+
 function isPronounceable(word) {
     if (/[^aeiouy]{3,}/.test(word)) return false;  // tre konsonanter i rad
     if (/[aeiouy]{3,}/.test(word)) return false;   // tre vokaler i rad
-    return VALID_ONSET.test(word);
+    if (!VALID_ONSET.test(word)) return false;
+    if (!VALID_ENDING.test(word)) return false;
+    // Samma trebokstavsbit två gånger låter som ett stammande hopkok
+    for (let i = 0; i + 3 <= word.length; i++) {
+        if (word.indexOf(word.slice(i, i + 3), i + 1) !== -1) return false;
+    }
+    return true;
 }
 
 function composeName(syllablePool) {
-    const count = 2 + Math.floor(Math.random() * 2); // två eller tre stavelser
+    // Oftare tre stavelser - tvåstaviga blir lätt för korta och intetsägande
+    const count = Math.random() < 0.7 ? 3 : 2;
     let word = '';
     for (let i = 0; i < count; i++) {
         word += pickRandom(syllablePool);
     }
-    if (word.length < 5 || word.length > 11) return null;
+    if (word.length < 6 || word.length > 11) return null;
     if (!isPronounceable(word)) return null;
     return capitalize(word);
 }
@@ -97,6 +111,7 @@ function makeFakeNames(answer, sourceNames, count) {
     const chosen = [];
     const usedKeys = new Set([answerKey]);
     const usedInitials = new Set([answer[0].toUpperCase()]);
+    const usedEndings = new Set([answerKey.slice(-3)]);
 
     for (let attempt = 0; attempt < 600 && chosen.length < count; attempt++) {
         const fake = composeName(pool);
@@ -104,6 +119,10 @@ function makeFakeNames(answer, sourceNames, count) {
 
         const key = normalizeName(fake);
         if (usedKeys.has(key) || REAL_NAMES.has(key)) continue;
+
+        // Två alternativ som slutar likadant ser ut som varandras varianter
+        const ending = key.slice(-3);
+        if (attempt < 400 && usedEndings.has(ending)) continue;
 
         // Får inte likna det rätta svarets början - då ser det ut som en
         // felstavning i stället för ett eget namn
@@ -116,6 +135,7 @@ function makeFakeNames(answer, sourceNames, count) {
 
         usedKeys.add(key);
         usedInitials.add(initial);
+        usedEndings.add(ending);
         chosen.push(fake);
     }
 
@@ -146,9 +166,20 @@ function makeFakeNarutoNames(answer, count) {
     return fakeFirst.map((first, i) => first + ' ' + (fakeLast[i] || fakeLast[0]));
 }
 
+// Namn på Pokémon som delar minst en typ med den givna figuren.
+// Är släktet för litet fyller vi på med alla, annars blir det för få
+// stavelser att bygga av.
+function sameTypeNames(pokemon) {
+    const types = pokemon.types || [];
+    const related = POKEMON_GEN1.filter(other =>
+        other.id !== pokemon.id && (other.types || []).some(t => types.includes(t))
+    );
+    if (related.length >= 5) return related.map(p => p.name);
+    return POKEMON_GEN1.filter(p => p.id !== pokemon.id).map(p => p.name);
+}
+
 function buildQuestions() {
     const questions = [];
-    const pokeNames = POKEMON_GEN1.map(p => p.name);
 
     POKEMON_GEN1.forEach(p => {
         questions.push({
@@ -156,7 +187,7 @@ function buildQuestions() {
             category: 'Pokémon',
             question: 'Vad heter denna Pokémon?',
             image: 'img/pokemon/' + p.id + '.png',
-            options: shuffleList([p.name, ...makeFakeNames(p.name, pokeNames, WRONG_OPTIONS)]),
+            options: shuffleList([p.name, ...makeFakeNames(p.name, sameTypeNames(p), WRONG_OPTIONS)]),
             answer: p.name
         });
     });
