@@ -244,10 +244,22 @@ body {
 }
 
 #category-buttons,
-#lobby-category-buttons {
+#penalty-buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+}
+
+.penalty-select {
+    margin-bottom: 18px;
+}
+
+.penalty-select label {
+    display: block;
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+    color: var(--ink);
+    font-weight: 800;
 }
 
 .cat-btn {
