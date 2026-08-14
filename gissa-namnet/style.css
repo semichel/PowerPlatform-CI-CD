@@ -276,6 +276,156 @@ body {
     margin-top: 10px;
 }
 
+/* Regler på startskärmen */
+.rules-card {
+    background: linear-gradient(180deg, #fffbe8, #fff3c4);
+    border: 3px solid var(--poke-yellow);
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+}
+
+.rules-title {
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: #8a6d00;
+    margin-bottom: 8px;
+}
+
+.rules-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rules-list li {
+    font-size: 0.96rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    padding-left: 22px;
+    position: relative;
+}
+
+.rules-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    background: linear-gradient(180deg, var(--poke-red) 0 45%, var(--ink) 45% 55%, #fff 55% 100%);
+}
+
+.rules-list strong {
+    color: var(--ink);
+}
+
+.best-record {
+    text-align: center;
+    font-weight: 800;
+    color: var(--poke-blue);
+    background: #f2f5ff;
+    border: 2px solid #dde3ff;
+    border-radius: 14px;
+    padding: 10px;
+    margin-bottom: 6px;
+}
+
+.best-record.hidden {
+    display: none;
+}
+
+/* Plånbok */
+.wallet {
+    background: var(--card);
+    border: 3px solid var(--grass);
+    border-radius: 20px;
+    padding: 14px 18px 16px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-md);
+}
+
+.wallet-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.wallet-label {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wallet-goal {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--ink-faint);
+}
+
+.wallet-amount {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--grass-dark);
+    line-height: 1.15;
+    margin-bottom: 8px;
+}
+
+.wallet-progress {
+    width: 100%;
+    height: 12px;
+    background: #eef1f6;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 2px solid var(--card-edge);
+}
+
+.wallet-progress-bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #5fd463, var(--grass), var(--poke-yellow));
+    transition: width 0.45s ease;
+}
+
+.streak-info {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--poke-red);
+}
+
+/* Slutskärm */
+.end-emoji {
+    font-size: 3.4rem;
+    margin-bottom: 6px;
+}
+
+.end-summary {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.end-summary strong {
+    color: var(--grass-dark);
+    font-weight: 800;
+}
+
+.end-record {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--poke-blue);
+    margin-bottom: 24px;
+}
+
 /* Game Screen */
 .game-header {
     position: relative;
