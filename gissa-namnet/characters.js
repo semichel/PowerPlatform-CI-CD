@@ -195,7 +195,7 @@ const NARUTO_CHARS = [
     { id: "madara", name: "Madara Uchiha", img: "img/naruto/madara.jpg" },
     { id: "sai", name: "Sai", img: "img/naruto/sai.jpg" },
     { id: "yamato", name: "Yamato", img: "img/naruto/yamato.jpg" },
-    { id: "nagato", name: "Nagato (Pain)", img: "img/naruto/nagato.jpg" },
+    { id: "nagato", name: "Nagato", img: "img/naruto/nagato.jpg" },
     { id: "konohamaru", name: "Konohamaru Sarutobi", img: "img/naruto/konohamaru.jpg" },
     { id: "shizune", name: "Shizune", img: "img/naruto/shizune.jpg" },
     { id: "anko", name: "Anko Mitarashi", img: "img/naruto/anko.jpg" },
