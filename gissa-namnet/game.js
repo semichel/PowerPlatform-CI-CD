@@ -24,6 +24,12 @@ let deckIndex = 0;
 let currentQuestion = null;
 let waitingForAnswer = false;
 let lastLoss = 0; // hur mycket senaste felsvaret faktiskt kostade
+let lastTickSecond = -1;
+let transitionId = null;
+
+// Kort paus mellan frågorna så att man hinner se svaret innan nästa bild
+const BREATHING_ROOM_MS = 900;
+const TIMER_GRACE_MS = 700; // titta på bilden innan klockan startar
 
 // Alla frågor är med - maxsumman är alla rätt utan fel
 const TOTAL_QUESTIONS = QUESTIONS.length;
@@ -92,10 +98,27 @@ function setPenalty(value) {
     Logger.log('GAME', `Straff satt till ${formatMoney(value)}`);
 }
 
+// Ljud på/av
+function renderSoundButtons() {
+    const on = Sound.isEnabled();
+    document.querySelectorAll('.btn-sound').forEach(btn => {
+        btn.textContent = on ? '\u{1F50A}' : '\u{1F507}';
+        btn.title = on ? 'Stäng av ljudet' : 'Sätt på ljudet';
+    });
+}
+
+function toggleSound() {
+    Sound.init();
+    Sound.setEnabled(!Sound.isEnabled());
+    renderSoundButtons();
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     const maxEl = document.getElementById('rules-max');
     if (maxEl) maxEl.textContent = formatMoney(MAX_SCORE);
+    Sound.loadPreference();
+    renderSoundButtons();
     renderPenaltyButtons();
     renderBestRecord();
 });
@@ -125,13 +148,33 @@ function startGame() {
     document.getElementById('question-total').textContent = TOTAL_QUESTIONS;
     document.getElementById('wallet-goal').textContent = 'Max: ' + formatMoney(MAX_SCORE);
 
+    Sound.init();
+    Sound.start();
+
     Logger.log('GAME', `Spel startat! ${formatMoney(money)} | Straff: ${formatMoney(wrongPenalty)} | Max: ${formatMoney(MAX_SCORE)} (${TOTAL_QUESTIONS} frågor)`);
     showScreen('game-screen');
     showQuestion();
 }
 
+// Andrum: tona ut kortet, kort paus, och först därefter nästa fråga
 function continueGame() {
-    showQuestion();
+    if (transitionId) return;
+    Sound.click();
+
+    const card = document.getElementById('question-card');
+    const options = document.getElementById('options-container');
+    const result = document.getElementById('result-area');
+
+    card.classList.add('leaving');
+    options.classList.add('leaving');
+    result.classList.add('hidden');
+
+    transitionId = setTimeout(() => {
+        transitionId = null;
+        card.classList.remove('leaving');
+        options.classList.remove('leaving');
+        showQuestion();
+    }, BREATHING_ROOM_MS);
 }
 
 function stopGame() {
@@ -169,10 +212,19 @@ function showQuestion() {
         cardImage.removeAttribute('src');
     }
 
+    // Musiken byter tema efter kategori
+    Sound.playTheme(currentQuestion.category === 'Naruto' ? 'naruto' : 'pokemon');
+
     updateWallet();
     document.getElementById('result-area').classList.add('hidden');
     waitingForAnswer = true;
     renderOptions(currentQuestion);
+
+    const card = document.getElementById('question-card');
+    card.classList.remove('entering');
+    void card.offsetWidth; // starta om animationen
+    card.classList.add('entering');
+
     startTimer();
     preloadUpcomingImages();
 }
@@ -191,7 +243,10 @@ function preloadUpcomingImages() {
 // Tidsgräns - hinner man inte svara räknas det som fel
 function startTimer() {
     stopTimer();
-    timerDeadline = Date.now() + QUESTION_TIME_MS;
+    lastTickSecond = -1;
+    // Klockan börjar först efter en kort stund, så att man hinner
+    // titta på bilden innan tiden tickar
+    timerDeadline = Date.now() + QUESTION_TIME_MS + TIMER_GRACE_MS;
     updateTimer();
     timerId = setInterval(updateTimer, 100);
 }
@@ -204,13 +259,22 @@ function stopTimer() {
 }
 
 function updateTimer() {
-    const left = Math.max(0, timerDeadline - Date.now());
+    const left = Math.max(0, Math.min(QUESTION_TIME_MS, timerDeadline - Date.now()));
     const bar = document.getElementById('timer-bar');
     const text = document.getElementById('timer-text');
+    const seconds = Math.ceil(left / 1000);
 
-    if (bar) bar.style.width = (left / QUESTION_TIME_MS * 100) + '%';
-    if (text) text.textContent = Math.ceil(left / 1000) + 's';
-    if (bar) bar.classList.toggle('timer-danger', left <= 3000);
+    if (bar) {
+        bar.style.width = (left / QUESTION_TIME_MS * 100) + '%';
+        bar.classList.toggle('timer-danger', left <= 3000);
+    }
+    if (text) text.textContent = seconds + 's';
+
+    // Ett tick per sekund de sista tre
+    if (left <= 3000 && left > 0 && seconds !== lastTickSecond) {
+        lastTickSecond = seconds;
+        Sound.tick();
+    }
 
     if (left <= 0) {
         stopTimer();
@@ -223,6 +287,8 @@ function timeUp() {
     waitingForAnswer = false;
     Logger.log('PLAYER', `TIDEN UT - rätt svar var ${currentQuestion.answer}`);
     applyWrongAnswer();
+    Sound.timeout();
+    shakeScreen();
     showResult(currentQuestion, false, null, true);
 }
 
@@ -282,13 +348,47 @@ function selectAnswer(selectedOption) {
         streak++;
         markQuestionSeen(q);
         saveBestMoney(money);
+        Sound.correct();
+        burstConfetti();
         Logger.log('PLAYER', `RÄTT (${q.answer}) | ${formatMoney(money)} | ${streak} i rad`);
     } else {
         applyWrongAnswer();
+        Sound.wrong();
+        shakeScreen();
         Logger.log('PLAYER', `FEL - svarade ${selectedOption}, rätt: ${q.answer} | -${formatMoney(lastLoss)} | ${formatMoney(money)}`);
     }
 
     showResult(q, correct, selectedOption, false);
+}
+
+// Konfetti vid rätt svar
+function burstConfetti() {
+    const colors = ['#ee1515', '#ffcb05', '#3b4cca', '#4caf50', '#ff8f3b'];
+    const layer = document.createElement('div');
+    layer.className = 'confetti-layer';
+
+    for (let i = 0; i < 26; i++) {
+        const piece = document.createElement('span');
+        piece.className = 'confetti-piece';
+        piece.style.left = (10 + Math.random() * 80) + '%';
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = (Math.random() * 0.2) + 's';
+        piece.style.setProperty('--drift', (Math.random() * 140 - 70) + 'px');
+        piece.style.setProperty('--spin', (Math.random() * 720 - 360) + 'deg');
+        layer.appendChild(piece);
+    }
+
+    document.getElementById('app').appendChild(layer);
+    setTimeout(() => layer.remove(), 1600);
+}
+
+// Skakning vid fel svar
+function shakeScreen() {
+    const card = document.getElementById('question-card');
+    card.classList.remove('shake');
+    void card.offsetWidth;
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 600);
 }
 
 // Sätter en bock eller ett kryss framför namnet när svaret avslöjas
@@ -359,6 +459,7 @@ function showResult(q, correct, selectedOption, timedOut) {
 
 function endGame(reason) {
     stopTimer();
+    Sound.stopMusic();
     const emoji = document.getElementById('end-emoji');
     const title = document.getElementById('end-title');
     const summary = document.getElementById('end-summary');
@@ -369,6 +470,9 @@ function endGame(reason) {
     const perfect = mistakes === 0 && answered === TOTAL_QUESTIONS;
 
     if (perfect) {
+        Sound.win();
+        burstConfetti();
+        setTimeout(burstConfetti, 400);
         emoji.textContent = '\u{1F451}';
         title.textContent = 'Perfekt spel!';
         summary.innerHTML = `Alla ${TOTAL_QUESTIONS} rätt utan ett enda fel &#x2013; maxsumman <strong>${formatMoney(money)}</strong>!`;
@@ -377,6 +481,7 @@ function endGame(reason) {
         title.textContent = 'Alla frågor klara!';
         summary.innerHTML = `Du slutade på <strong>${formatMoney(money)}</strong> med ${correctCount} rätt av ${answered}.`;
     } else {
+        Sound.gameOver();
         emoji.textContent = '\u{1F44B}';
         title.textContent = 'Bra spelat!';
         summary.innerHTML = `Du slutade på <strong>${formatMoney(money)}</strong> med ${correctCount} rätt av ${answered}.`;
