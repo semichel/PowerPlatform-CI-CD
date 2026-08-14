@@ -201,6 +201,14 @@ function selectAnswer(selectedOption) {
     showResult(q, correct, selectedOption);
 }
 
+// Sätter en bock eller ett kryss framför namnet när svaret avslöjas
+function markOption(btn, symbol) {
+    const icon = document.createElement('span');
+    icon.className = 'option-icon';
+    icon.textContent = symbol;
+    btn.prepend(icon);
+}
+
 function showResult(q, correct, selectedOption) {
     document.getElementById('card-category').textContent = q.category;
 
@@ -209,8 +217,10 @@ function showResult(q, correct, selectedOption) {
         btn.onclick = null;
         if (val === String(q.answer)) {
             btn.classList.add('correct');
+            markOption(btn, '✔');
         } else if (val === String(selectedOption) && !correct) {
             btn.classList.add('wrong');
+            markOption(btn, '✖');
         }
         btn.classList.add('disabled');
     });

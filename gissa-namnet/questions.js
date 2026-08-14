@@ -1,96 +1,103 @@
 // Bygger frågor från karaktärsdatan i characters.js
-// Varje fråga visar en bild och fyra namnalternativ - ett rätt och tre fel.
-// Felalternativen väljs bland de namn som liknar det rätta mest, så att
-// gissningarna blir rimliga (Pikachu/Raichu, Sasuke Uchiha/Itachi Uchiha)
-// istället för slumpade och uppenbart fel.
+// Varje fråga visar en bild och fyra namnalternativ. De tre felaktiga är
+// felstavningar av det rätta namnet - aldrig namn på andra figurer.
+// Nidorina får alltså sällskap av Nidorena, Nidorinna och Nidorona.
 
-const SIMILAR_POOL_SIZE = 7; // hur många liknande namn vi lottar de tre felen ur
+const VOWELS = ['a', 'e', 'i', 'o', 'u', 'y'];
+
+// Konsonanter som lätt förväxlas när man stavar
+const CONSONANT_SWAPS = {
+    b: ['p'], p: ['b'], d: ['t'], t: ['d'], g: ['k', 'j'], k: ['c', 'g'],
+    c: ['k', 's'], s: ['z', 'c'], z: ['s'], v: ['w', 'f'], w: ['v'],
+    f: ['v'], m: ['n'], n: ['m'], r: ['l'], l: ['r'], j: ['g'], h: ['k']
+};
 
 function normalizeName(name) {
     return name.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-// Sørensen-Dice på teckenpar: hur mycket två namn överlappar
-function diceCoefficient(a, b) {
-    if (a === b) return 1;
-    if (a.length < 2 || b.length < 2) return 0;
+const isLetter = ch => /[a-zA-Z]/.test(ch);
 
-    const pairs = new Map();
-    for (let i = 0; i < a.length - 1; i++) {
-        const pair = a.slice(i, i + 2);
-        pairs.set(pair, (pairs.get(pair) || 0) + 1);
-    }
+// Alla riktiga namn - en felstavning får aldrig råka bli en annan figur
+function buildRealNameSet() {
+    const set = new Set();
+    POKEMON_GEN1.forEach(p => set.add(normalizeName(p.name)));
+    NARUTO_CHARS.forEach(c => set.add(normalizeName(c.name)));
+    return set;
+}
 
-    let hits = 0;
-    for (let i = 0; i < b.length - 1; i++) {
-        const pair = b.slice(i, i + 2);
-        const count = pairs.get(pair) || 0;
-        if (count > 0) {
-            pairs.set(pair, count - 1);
-            hits++;
+const REAL_NAMES = buildRealNameSet();
+
+// Skapar rimliga felstavningar av ett namn.
+// Första bokstaven lämnas i fred så att namnet fortfarande ser rätt ut.
+function generateMisspellings(name) {
+    const variants = [];
+    const push = value => {
+        if (value && value.length > 2) variants.push(value);
+    };
+
+    for (let i = 1; i < name.length; i++) {
+        const ch = name[i];
+        if (!isLetter(ch)) continue;
+        // Rör inte bokstaven som inleder ett ord - "Mr. ime" ser trasigt ut,
+        // inte felstavat
+        if (!isLetter(name[i - 1])) continue;
+
+        const before = name.slice(0, i);
+        const after = name.slice(i + 1);
+        const lower = ch.toLowerCase();
+
+        // Byt ut en vokal mot en annan: Nidorina -> Nidorena
+        if (VOWELS.includes(lower)) {
+            VOWELS.forEach(v => {
+                if (v !== lower) push(before + v + after);
+            });
         }
+
+        // Dubblera en bokstav: Nidorina -> Nidorinna
+        push(before + ch + ch + after);
+
+        // Ta bort en bokstav: Nidorina -> Nidorna
+        if (name.length > 4) push(before + after);
+
+        // Kasta om två bokstäver: Nidorina -> Nidorian
+        if (i + 1 < name.length && isLetter(name[i + 1]) && name[i + 1].toLowerCase() !== lower) {
+            push(before + name[i + 1] + ch + name.slice(i + 2));
+        }
+
+        // Byt mot en konsonant som låter likt: Pidgey -> Bidgey
+        (CONSONANT_SWAPS[lower] || []).forEach(swap => {
+            push(before + swap + after);
+        });
     }
 
-    return (2 * hits) / (a.length - 1 + b.length - 1);
+    // Rensa bort dubbletter, det rätta namnet och allt som är ett riktigt namn
+    const correct = normalizeName(name);
+    const seen = new Set();
+    return variants.filter(variant => {
+        const key = normalizeName(variant);
+        if (key === correct || REAL_NAMES.has(key) || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 }
 
-function sharedPrefixLength(a, b) {
-    let i = 0;
-    while (i < a.length && i < b.length && a[i] === b[i]) i++;
-    return i;
-}
-
-function sharedSuffixLength(a, b) {
-    let i = 0;
-    while (i < a.length && i < b.length && a[a.length - 1 - i] === b[b.length - 1 - i]) i++;
-    return i;
-}
-
-// Högre poäng = namnen liknar varandra mer.
-// Ändelser väger tyngst: -saur, -chu, -eon hos Pokémon och efternamn som
-// Uchiha eller Hyuga hos Naruto gör alternativen riktigt lurendrejande.
-function nameSimilarity(nameA, nameB) {
-    const a = normalizeName(nameA);
-    const b = normalizeName(nameB);
-    const longest = Math.max(a.length, b.length);
-    if (longest === 0) return 0;
-
-    return diceCoefficient(a, b)
-        + 0.6 * (sharedSuffixLength(a, b) / longest)
-        + 0.35 * (sharedPrefixLength(a, b) / longest);
-}
-
-// Pokémon som ligger nära varandra i pokédexen hör oftast ihop - samma
-// utvecklingskedja eller samma sorts figur. Det gör dem till bra fällor
-// även när namnen inte alls liknar varandra (Eevee/Vaporeon, Mewtwo/Mew).
-function dexProximityBonus(idA, idB) {
-    if (typeof idA !== 'number' || typeof idB !== 'number') return 0;
-    const distance = Math.abs(idA - idB);
-    if (distance === 0) return 0;
-    if (distance <= 2) return 0.7;
-    if (distance <= 4) return 0.35;
-    return 0;
-}
-
-function pickSimilarWrongOptions(correct, pool, count) {
-    const ranked = pool
-        .filter(entry => entry.name !== correct.name)
-        .map(entry => ({
-            name: entry.name,
-            score: nameSimilarity(correct.name, entry.name)
-                + dexProximityBonus(correct.id, entry.id)
-        }))
-        .sort((x, y) => y.score - x.score);
-
-    // Lotta ur de mest lika så att samma figur inte får identiska
-    // alternativ varje gång man spelar
-    const candidates = ranked.slice(0, Math.max(count, SIMILAR_POOL_SIZE)).map(r => r.name);
-
+function pickMisspelledOptions(name, count) {
+    const pool = generateMisspellings(name);
     const chosen = [];
-    while (chosen.length < count && candidates.length > 0) {
-        const i = Math.floor(Math.random() * candidates.length);
-        chosen.push(candidates.splice(i, 1)[0]);
+
+    while (chosen.length < count && pool.length > 0) {
+        const i = Math.floor(Math.random() * pool.length);
+        chosen.push(pool.splice(i, 1)[0]);
     }
+
+    // Skulle något namn vara för kort för att varieras nog, fyll på
+    // med en enkel ändelse så att det alltid blir fyra alternativ
+    let suffix = 0;
+    while (chosen.length < count) {
+        chosen.push(name + 'a'.repeat(++suffix));
+    }
+
     return chosen;
 }
 
@@ -103,7 +110,7 @@ function buildQuestions() {
             category: 'Pokémon',
             question: 'Vad heter denna Pokémon?',
             image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' + p.id + '.png',
-            options: [p.name, ...pickSimilarWrongOptions(p, POKEMON_GEN1, 3)],
+            options: [p.name, ...pickMisspelledOptions(p.name, 3)],
             answer: p.name
         });
     });
@@ -114,7 +121,7 @@ function buildQuestions() {
             category: 'Naruto',
             question: 'Vem är denna karaktär?',
             image: c.img,
-            options: [c.name, ...pickSimilarWrongOptions(c, NARUTO_CHARS, 3)],
+            options: [c.name, ...pickMisspelledOptions(c.name, 3)],
             answer: c.name
         });
     });

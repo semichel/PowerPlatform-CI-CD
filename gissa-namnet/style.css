@@ -619,6 +619,15 @@ body {
     opacity: 0.65;
 }
 
+/* Bock/kryss framför namnet när svaret avslöjas */
+.option-icon {
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 1.1em;
+    font-weight: 800;
+    line-height: 1;
+}
+
 .option-btn.correct {
     background: linear-gradient(180deg, #eafbf0, #d6f5e0);
     border-color: var(--grass);
