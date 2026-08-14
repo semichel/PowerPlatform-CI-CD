@@ -338,6 +338,27 @@ body {
     display: none;
 }
 
+/* Stor startknapp */
+.btn-start {
+    width: 100%;
+    font-size: 1.5rem;
+    padding: 20px 40px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* "Vill du fortsätta?" */
+.continue-prompt {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--ink);
+    margin-bottom: 12px;
+}
+
+#continue-btn.hidden {
+    display: none;
+}
+
 /* Plånbok */
 .wallet {
     background: var(--card);

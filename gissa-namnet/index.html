@@ -13,7 +13,7 @@
             <div class="logo">
                 <h1>Gissa Namnet!</h1>
                 <p class="subtitle">Pokémon &amp; Naruto &#x2013; Special Edition &#x2764;&#xFE0F;</p>
-                <p class="version">v2.0</p>
+                <p class="version">v3.0</p>
             </div>
 
             <div class="start-options">
@@ -22,26 +22,22 @@
                     <ul class="rules-list">
                         <li>Du börjar med <strong>500 kr</strong></li>
                         <li>Varje rätt svar ger <strong>+100 kr</strong></li>
-                        <li>Målet är att nå <strong>5 000 kr</strong></li>
-                        <li>Svarar du fel åker du tillbaka till 500 kr</li>
+                        <li>Varje fel svar kostar <strong>500 kr</strong></li>
+                        <li>Efter varje svar väljer du om du vill fortsätta</li>
+                        <li>Alla rätt utan fel ger maxsumman <strong id="rules-max"></strong></li>
                     </ul>
                 </div>
-                <div class="category-select">
-                    <label>Välj kategorier:</label>
-                    <div id="category-buttons"></div>
-                </div>
                 <div id="best-record" class="best-record hidden"></div>
-                <button class="btn-primary" onclick="startGame()">Starta spelet!</button>
+                <button class="btn-primary btn-start" onclick="startGame()">Start</button>
             </div>
 
-            <button class="btn-secondary btn-small-text" onclick="resetQuestionHistory()">Nollställ frågehistorik</button>
             <button class="btn-secondary btn-small-text" onclick="toggleFlip()">Vänd skärmen</button>
         </div>
 
         <!-- Game Screen -->
         <div id="game-screen" class="screen">
             <div class="game-header">
-                <div class="round-info">Fråga <span id="question-count">1</span></div>
+                <div class="round-info">Fråga <span id="question-count">1</span> / <span id="question-total">0</span></div>
                 <div class="streak-info" id="streak-info"></div>
                 <button class="btn-flip" onclick="toggleFlip()" title="Vänd skärmen">&#x1F503;</button>
             </div>
@@ -49,7 +45,7 @@
             <div class="wallet">
                 <div class="wallet-top">
                     <span class="wallet-label">Din plånbok</span>
-                    <span class="wallet-goal">Mål: 5 000 kr</span>
+                    <span class="wallet-goal" id="wallet-goal"></span>
                 </div>
                 <div class="wallet-amount" id="wallet-amount">500 kr</div>
                 <div class="wallet-progress">
@@ -68,12 +64,12 @@
             <div id="result-area" class="result-area hidden">
                 <div id="result-text"></div>
                 <div id="result-points"></div>
+                <div class="continue-prompt" id="continue-prompt">Vill du fortsätta?</div>
                 <div class="result-buttons">
-                    <button class="btn-primary" id="next-btn" onclick="nextQuestion()">Nästa fråga</button>
+                    <button class="btn-continue" id="continue-btn" onclick="continueGame()">Ja, fortsätt</button>
+                    <button class="btn-stop" id="stop-btn" onclick="stopGame()">Nej, sluta</button>
                 </div>
             </div>
-
-            <button class="btn-secondary btn-small-text" onclick="quitGame()">Avsluta spelet</button>
         </div>
 
         <!-- End Screen -->
