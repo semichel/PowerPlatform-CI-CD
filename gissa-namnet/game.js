@@ -6,8 +6,11 @@
 
 const START_MONEY = 500;
 const MONEY_PER_CORRECT = 100;
-const WRONG_PENALTY = 500;
 const QUESTION_TIME_MS = 10000; // tio sekunder per fråga
+
+// Straffet väljs på startskärmen innan spelet börjar
+const PENALTY_CHOICES = [100, 200, 500, 1000];
+let wrongPenalty = 500;
 
 let timerId = null;
 let timerDeadline = 0;
@@ -71,10 +74,29 @@ function renderBestRecord() {
     }
 }
 
+// Straffväljare på startskärmen
+function renderPenaltyButtons() {
+    const container = document.getElementById('penalty-buttons');
+    if (!container) return;
+    container.innerHTML = PENALTY_CHOICES.map(value =>
+        `<button class="cat-btn${value === wrongPenalty ? ' selected' : ''}" onclick="setPenalty(${value})">${formatMoney(value)}</button>`
+    ).join('');
+
+    const rulesPenalty = document.getElementById('rules-penalty');
+    if (rulesPenalty) rulesPenalty.textContent = formatMoney(wrongPenalty);
+}
+
+function setPenalty(value) {
+    wrongPenalty = value;
+    renderPenaltyButtons();
+    Logger.log('GAME', `Straff satt till ${formatMoney(value)}`);
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     const maxEl = document.getElementById('rules-max');
     if (maxEl) maxEl.textContent = formatMoney(MAX_SCORE);
+    renderPenaltyButtons();
     renderBestRecord();
 });
 
@@ -103,7 +125,7 @@ function startGame() {
     document.getElementById('question-total').textContent = TOTAL_QUESTIONS;
     document.getElementById('wallet-goal').textContent = 'Max: ' + formatMoney(MAX_SCORE);
 
-    Logger.log('GAME', `Spel startat! ${formatMoney(money)} | Max: ${formatMoney(MAX_SCORE)} (${TOTAL_QUESTIONS} frågor)`);
+    Logger.log('GAME', `Spel startat! ${formatMoney(money)} | Straff: ${formatMoney(wrongPenalty)} | Max: ${formatMoney(MAX_SCORE)} (${TOTAL_QUESTIONS} frågor)`);
     showScreen('game-screen');
     showQuestion();
 }
@@ -227,7 +249,7 @@ function renderOptions(q) {
 // 500 kr är golvet - man kan aldrig hamna under startsumman
 function applyWrongAnswer() {
     const before = money;
-    money = Math.max(START_MONEY, money - WRONG_PENALTY);
+    money = Math.max(START_MONEY, money - wrongPenalty);
     lastLoss = before - money;
     streak = 0;
     mistakes++;
