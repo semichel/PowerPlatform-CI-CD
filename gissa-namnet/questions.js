@@ -1,9 +1,9 @@
 // Bygger frågor från karaktärsdatan i characters.js
-// Varje fråga visar en bild och sex namnalternativ. De fem felaktiga är
+// Varje fråga visar en bild och fyra namnalternativ. De tre felaktiga är
 // felstavningar av det rätta namnet - aldrig namn på andra figurer.
-// Nidorina får alltså sällskap av Nidorena, Nidorona, Nidirina och så vidare.
+// Nidorina får alltså sällskap av Nidorena, Nidorinna och Nidorona.
 
-const WRONG_OPTIONS = 5; // fem felstavningar + rätt svar = sex alternativ
+const WRONG_OPTIONS = 3; // tre felstavningar + rätt svar = fyra alternativ
 
 const VOWELS = ['a', 'e', 'i', 'o', 'u', 'y'];
 
@@ -32,10 +32,6 @@ const REAL_NAMES = buildRealNameSet();
 
 // Skapar rimliga felstavningar av ett namn.
 // Första bokstaven lämnas i fred så att namnet fortfarande ser rätt ut.
-// Lägre siffra = svårare att upptäcka. En utbytt bokstav är mycket
-// lurigare än en dubblerad, som syns direkt på ordets längd.
-const SUBTLETY = { substitution: 0, transposition: 1, doubling: 2, deletion: 2 };
-
 function generateMisspellings(name) {
     const variants = [];
     let position = 0;
@@ -82,15 +78,12 @@ function generateMisspellings(name) {
     // Rensa bort dubbletter, det rätta namnet och allt som är ett riktigt namn
     const correct = normalizeName(name);
     const seen = new Set();
-    const unique = variants.filter(variant => {
+    return variants.filter(variant => {
         const key = normalizeName(variant.value);
         if (key === correct || REAL_NAMES.has(key) || seen.has(key)) return false;
         seen.add(key);
         return true;
     });
-
-    // Subtilaste varianterna först
-    return unique.sort((a, b) => SUBTLETY[a.kind] - SUBTLETY[b.kind]);
 }
 
 function shuffleOptions(list) {
@@ -103,9 +96,9 @@ function shuffleOptions(list) {
 }
 
 function pickMisspelledOptions(name, count) {
-    // Lotta ur de subtilaste, men ta ett större urval än vi behöver så att
-    // samma figur inte visar identiska alternativ varje gång
-    const pool = shuffleOptions(generateMisspellings(name).slice(0, Math.max(count * 3, 14)));
+    // Lotta fritt bland alla varianter - en blandning av utbytta, omkastade,
+    // dubblerade och borttagna bokstäver, inte bara de allra lurigaste
+    const pool = shuffleOptions(generateMisspellings(name));
     const chosen = [];
     const usedPositions = new Set();
 

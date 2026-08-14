@@ -147,13 +147,6 @@ function showQuestion() {
         cardImage.removeAttribute('src');
     }
 
-    // Dölj figuren tills svaret avslöjas. Pokémon-bilderna har genomskinlig
-    // bakgrund och blir riktiga silhuetter; Naruto-bilderna har bakgrund
-    // och döljs med oskärpa i stället.
-    cardImage.classList.remove('reveal');
-    cardImage.classList.toggle('silhouette', currentQuestion.category === 'Pokémon');
-    cardImage.classList.toggle('obscured', currentQuestion.category !== 'Pokémon');
-
     updateWallet();
     document.getElementById('result-area').classList.add('hidden');
     waitingForAnswer = true;
@@ -274,11 +267,6 @@ function markOption(btn, symbol) {
 
 function showResult(q, correct, selectedOption, timedOut) {
     document.getElementById('card-category').textContent = q.category;
-
-    // Avslöja figuren
-    const cardImage = document.getElementById('card-image');
-    cardImage.classList.remove('silhouette', 'obscured');
-    cardImage.classList.add('reveal');
 
     document.querySelectorAll('.option-btn').forEach(btn => {
         const val = btn.dataset.value;

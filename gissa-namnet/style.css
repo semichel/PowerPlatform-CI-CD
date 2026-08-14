@@ -592,24 +592,6 @@ body {
     background: transparent;
 }
 
-/* Figuren döljs tills svaret avslöjas */
-.card-image.silhouette {
-    filter: brightness(0) contrast(150%);
-}
-
-.card-image.obscured {
-    filter: blur(11px) grayscale(100%) contrast(115%);
-}
-
-.card-image.reveal {
-    animation: revealPop 0.45s ease;
-}
-
-@keyframes revealPop {
-    from { filter: brightness(0.25) blur(6px); transform: scale(0.97); }
-    to   { filter: none; transform: scale(1); }
-}
-
 /* Nedräkning */
 .timer {
     display: flex;
