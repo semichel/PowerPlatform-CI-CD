@@ -1,5 +1,6 @@
 // Gissa Namnet - enspelarläge med plånbok
 // Start: 500 kr. Rätt svar ger 100 kr, fel svar kostar 500 kr.
+// Plånboken kan aldrig gå under 500 kr - det är alltid golvet.
 // Efter varje svar väljer du själv om du vill fortsätta eller sluta.
 // Maxsumman får du genom att svara rätt på alla frågor utan ett enda fel.
 
@@ -15,6 +16,7 @@ let deck = [];
 let deckIndex = 0;
 let currentQuestion = null;
 let waitingForAnswer = false;
+let lastLoss = 0; // hur mycket senaste felsvaret faktiskt kostade
 
 // Alla frågor är med - maxsumman är alla rätt utan fel
 const TOTAL_QUESTIONS = QUESTIONS.length;
@@ -191,10 +193,13 @@ function selectAnswer(selectedOption) {
         streak++;
         Logger.log('PLAYER', `RÄTT (${q.answer}) | ${formatMoney(money)} | ${streak} i rad`);
     } else {
-        money -= WRONG_PENALTY;
+        // 500 kr är golvet - man kan aldrig hamna under startsumman
+        const before = money;
+        money = Math.max(START_MONEY, money - WRONG_PENALTY);
+        lastLoss = before - money;
         streak = 0;
         mistakes++;
-        Logger.log('PLAYER', `FEL - svarade ${selectedOption}, rätt: ${q.answer} | -${formatMoney(WRONG_PENALTY)} | ${formatMoney(money)}`);
+        Logger.log('PLAYER', `FEL - svarade ${selectedOption}, rätt: ${q.answer} | -${formatMoney(lastLoss)} | ${formatMoney(money)}`);
     }
 
     saveBestMoney(money);
@@ -227,12 +232,6 @@ function showResult(q, correct, selectedOption) {
 
     updateWallet();
 
-    // Pengarna är slut
-    if (money <= 0) {
-        endGame('broke');
-        return;
-    }
-
     const resultText = document.getElementById('result-text');
     const resultPoints = document.getElementById('result-points');
 
@@ -240,9 +239,14 @@ function showResult(q, correct, selectedOption) {
         resultText.textContent = `Rätt! Det är ${q.answer}.`;
         resultPoints.textContent = '+' + formatMoney(MONEY_PER_CORRECT);
         resultPoints.className = 'points-perfect';
-    } else {
+    } else if (lastLoss > 0) {
         resultText.textContent = `Fel! Det är ${q.answer}.`;
-        resultPoints.textContent = '-' + formatMoney(WRONG_PENALTY);
+        resultPoints.textContent = '-' + formatMoney(lastLoss);
+        resultPoints.className = 'points-far';
+    } else {
+        // Redan nere på golvet - felet kostade ingenting
+        resultText.textContent = `Fel! Det är ${q.answer}.`;
+        resultPoints.textContent = 'Du står kvar på ' + formatMoney(START_MONEY);
         resultPoints.className = 'points-far';
     }
 
@@ -277,16 +281,11 @@ function endGame(reason) {
     const answered = questionNumber;
     const correctCount = answered - mistakes;
     const perfect = mistakes === 0 && answered === TOTAL_QUESTIONS;
-    const questionWord = answered === 1 ? 'fråga' : 'frågor';
 
     if (perfect) {
         emoji.textContent = '\u{1F451}';
         title.textContent = 'Perfekt spel!';
         summary.innerHTML = `Alla ${TOTAL_QUESTIONS} rätt utan ett enda fel &#x2013; maxsumman <strong>${formatMoney(money)}</strong>!`;
-    } else if (reason === 'broke') {
-        emoji.textContent = '\u{1F4B8}';
-        title.textContent = 'Pengarna tog slut!';
-        summary.innerHTML = `Du hamnade på <strong>${formatMoney(money)}</strong> efter ${answered} ${questionWord}.`;
     } else if (reason === 'finished') {
         emoji.textContent = '\u{1F3C1}';
         title.textContent = 'Alla frågor klara!';
