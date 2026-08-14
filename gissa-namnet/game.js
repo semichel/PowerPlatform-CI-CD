@@ -7,6 +7,10 @@
 const START_MONEY = 500;
 const MONEY_PER_CORRECT = 100;
 const WRONG_PENALTY = 500;
+const QUESTION_TIME_MS = 10000; // tio sekunder per fråga
+
+let timerId = null;
+let timerDeadline = 0;
 
 let money = START_MONEY;
 let streak = 0;
@@ -128,6 +132,7 @@ function showQuestion() {
     document.getElementById('card-question').textContent = currentQuestion.question;
 
     const cardImage = document.getElementById('card-image');
+    const cardFrame = document.getElementById('card-image-frame');
     if (currentQuestion.image) {
         cardImage.onload = () => Logger.log('GAME', `Bild laddad: ${currentQuestion.image.substring(0, 60)}...`);
         cardImage.onerror = () => {
@@ -136,16 +141,62 @@ function showQuestion() {
         };
         cardImage.src = currentQuestion.image;
         cardImage.alt = 'Frågebild';
-        cardImage.classList.remove('hidden');
+        cardFrame.classList.remove('hidden');
     } else {
-        cardImage.classList.add('hidden');
+        cardFrame.classList.add('hidden');
         cardImage.removeAttribute('src');
     }
+
+    // Dölj figuren tills svaret avslöjas. Pokémon-bilderna har genomskinlig
+    // bakgrund och blir riktiga silhuetter; Naruto-bilderna har bakgrund
+    // och döljs med oskärpa i stället.
+    cardImage.classList.remove('reveal');
+    cardImage.classList.toggle('silhouette', currentQuestion.category === 'Pokémon');
+    cardImage.classList.toggle('obscured', currentQuestion.category !== 'Pokémon');
 
     updateWallet();
     document.getElementById('result-area').classList.add('hidden');
     waitingForAnswer = true;
     renderOptions(currentQuestion);
+    startTimer();
+}
+
+// Tidsgräns - hinner man inte svara räknas det som fel
+function startTimer() {
+    stopTimer();
+    timerDeadline = Date.now() + QUESTION_TIME_MS;
+    updateTimer();
+    timerId = setInterval(updateTimer, 100);
+}
+
+function stopTimer() {
+    if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+    }
+}
+
+function updateTimer() {
+    const left = Math.max(0, timerDeadline - Date.now());
+    const bar = document.getElementById('timer-bar');
+    const text = document.getElementById('timer-text');
+
+    if (bar) bar.style.width = (left / QUESTION_TIME_MS * 100) + '%';
+    if (text) text.textContent = Math.ceil(left / 1000) + 's';
+    if (bar) bar.classList.toggle('timer-danger', left <= 3000);
+
+    if (left <= 0) {
+        stopTimer();
+        timeUp();
+    }
+}
+
+function timeUp() {
+    if (!waitingForAnswer) return;
+    waitingForAnswer = false;
+    Logger.log('PLAYER', `TIDEN UT - rätt svar var ${currentQuestion.answer}`);
+    applyWrongAnswer();
+    showResult(currentQuestion, false, null, true);
 }
 
 function updateWallet() {
@@ -180,30 +231,37 @@ function renderOptions(q) {
     container.classList.toggle('options-single-col', q.options.length > 4);
 }
 
+// 500 kr är golvet - man kan aldrig hamna under startsumman
+function applyWrongAnswer() {
+    const before = money;
+    money = Math.max(START_MONEY, money - WRONG_PENALTY);
+    lastLoss = before - money;
+    streak = 0;
+    mistakes++;
+    markQuestionSeen(currentQuestion);
+    saveBestMoney(money);
+}
+
 function selectAnswer(selectedOption) {
     if (!waitingForAnswer) return;
     waitingForAnswer = false;
+    stopTimer();
 
     const q = currentQuestion;
     const correct = selectedOption === q.answer;
-    markQuestionSeen(q);
 
     if (correct) {
         money += MONEY_PER_CORRECT;
         streak++;
+        markQuestionSeen(q);
+        saveBestMoney(money);
         Logger.log('PLAYER', `RÄTT (${q.answer}) | ${formatMoney(money)} | ${streak} i rad`);
     } else {
-        // 500 kr är golvet - man kan aldrig hamna under startsumman
-        const before = money;
-        money = Math.max(START_MONEY, money - WRONG_PENALTY);
-        lastLoss = before - money;
-        streak = 0;
-        mistakes++;
+        applyWrongAnswer();
         Logger.log('PLAYER', `FEL - svarade ${selectedOption}, rätt: ${q.answer} | -${formatMoney(lastLoss)} | ${formatMoney(money)}`);
     }
 
-    saveBestMoney(money);
-    showResult(q, correct, selectedOption);
+    showResult(q, correct, selectedOption, false);
 }
 
 // Sätter en bock eller ett kryss framför namnet när svaret avslöjas
@@ -214,8 +272,13 @@ function markOption(btn, symbol) {
     btn.prepend(icon);
 }
 
-function showResult(q, correct, selectedOption) {
+function showResult(q, correct, selectedOption, timedOut) {
     document.getElementById('card-category').textContent = q.category;
+
+    // Avslöja figuren
+    const cardImage = document.getElementById('card-image');
+    cardImage.classList.remove('silhouette', 'obscured');
+    cardImage.classList.add('reveal');
 
     document.querySelectorAll('.option-btn').forEach(btn => {
         const val = btn.dataset.value;
@@ -239,14 +302,14 @@ function showResult(q, correct, selectedOption) {
         resultText.textContent = `Rätt! Det är ${q.answer}.`;
         resultPoints.textContent = '+' + formatMoney(MONEY_PER_CORRECT);
         resultPoints.className = 'points-perfect';
-    } else if (lastLoss > 0) {
-        resultText.textContent = `Fel! Det är ${q.answer}.`;
-        resultPoints.textContent = '-' + formatMoney(lastLoss);
-        resultPoints.className = 'points-far';
     } else {
+        resultText.textContent = timedOut
+            ? `Tiden tog slut! Det är ${q.answer}.`
+            : `Fel! Det är ${q.answer}.`;
         // Redan nere på golvet - felet kostade ingenting
-        resultText.textContent = `Fel! Det är ${q.answer}.`;
-        resultPoints.textContent = 'Du står kvar på ' + formatMoney(START_MONEY);
+        resultPoints.textContent = lastLoss > 0
+            ? '-' + formatMoney(lastLoss)
+            : 'Du står kvar på ' + formatMoney(START_MONEY);
         resultPoints.className = 'points-far';
     }
 
@@ -273,6 +336,7 @@ function showResult(q, correct, selectedOption) {
 }
 
 function endGame(reason) {
+    stopTimer();
     const emoji = document.getElementById('end-emoji');
     const title = document.getElementById('end-title');
     const summary = document.getElementById('end-summary');

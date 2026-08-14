@@ -1,7 +1,9 @@
 // Bygger frågor från karaktärsdatan i characters.js
-// Varje fråga visar en bild och fyra namnalternativ. De tre felaktiga är
+// Varje fråga visar en bild och sex namnalternativ. De fem felaktiga är
 // felstavningar av det rätta namnet - aldrig namn på andra figurer.
-// Nidorina får alltså sällskap av Nidorena, Nidorinna och Nidorona.
+// Nidorina får alltså sällskap av Nidorena, Nidorona, Nidirina och så vidare.
+
+const WRONG_OPTIONS = 5; // fem felstavningar + rätt svar = sex alternativ
 
 const VOWELS = ['a', 'e', 'i', 'o', 'u', 'y'];
 
@@ -30,10 +32,15 @@ const REAL_NAMES = buildRealNameSet();
 
 // Skapar rimliga felstavningar av ett namn.
 // Första bokstaven lämnas i fred så att namnet fortfarande ser rätt ut.
+// Lägre siffra = svårare att upptäcka. En utbytt bokstav är mycket
+// lurigare än en dubblerad, som syns direkt på ordets längd.
+const SUBTLETY = { substitution: 0, transposition: 1, doubling: 2, deletion: 2 };
+
 function generateMisspellings(name) {
     const variants = [];
-    const push = value => {
-        if (value && value.length > 2) variants.push(value);
+    let position = 0;
+    const push = (value, kind) => {
+        if (value && value.length > 2) variants.push({ value, kind, position });
     };
 
     for (let i = 1; i < name.length; i++) {
@@ -46,53 +53,79 @@ function generateMisspellings(name) {
         const before = name.slice(0, i);
         const after = name.slice(i + 1);
         const lower = ch.toLowerCase();
+        position = i;
 
         // Byt ut en vokal mot en annan: Nidorina -> Nidorena
         if (VOWELS.includes(lower)) {
             VOWELS.forEach(v => {
-                if (v !== lower) push(before + v + after);
+                if (v !== lower) push(before + v + after, 'substitution');
             });
         }
 
         // Dubblera en bokstav: Nidorina -> Nidorinna
-        push(before + ch + ch + after);
+        push(before + ch + ch + after, 'doubling');
 
         // Ta bort en bokstav: Nidorina -> Nidorna
-        if (name.length > 4) push(before + after);
+        if (name.length > 4) push(before + after, 'deletion');
 
         // Kasta om två bokstäver: Nidorina -> Nidorian
         if (i + 1 < name.length && isLetter(name[i + 1]) && name[i + 1].toLowerCase() !== lower) {
-            push(before + name[i + 1] + ch + name.slice(i + 2));
+            push(before + name[i + 1] + ch + name.slice(i + 2), 'transposition');
         }
 
         // Byt mot en konsonant som låter likt: Pidgey -> Bidgey
         (CONSONANT_SWAPS[lower] || []).forEach(swap => {
-            push(before + swap + after);
+            push(before + swap + after, 'substitution');
         });
     }
 
     // Rensa bort dubbletter, det rätta namnet och allt som är ett riktigt namn
     const correct = normalizeName(name);
     const seen = new Set();
-    return variants.filter(variant => {
-        const key = normalizeName(variant);
+    const unique = variants.filter(variant => {
+        const key = normalizeName(variant.value);
         if (key === correct || REAL_NAMES.has(key) || seen.has(key)) return false;
         seen.add(key);
         return true;
     });
+
+    // Subtilaste varianterna först
+    return unique.sort((a, b) => SUBTLETY[a.kind] - SUBTLETY[b.kind]);
+}
+
+function shuffleOptions(list) {
+    const shuffled = [...list];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
 }
 
 function pickMisspelledOptions(name, count) {
-    const pool = generateMisspellings(name);
+    // Lotta ur de subtilaste, men ta ett större urval än vi behöver så att
+    // samma figur inte visar identiska alternativ varje gång
+    const pool = shuffleOptions(generateMisspellings(name).slice(0, Math.max(count * 3, 14)));
     const chosen = [];
+    const usedPositions = new Set();
 
-    while (chosen.length < count && pool.length > 0) {
-        const i = Math.floor(Math.random() * pool.length);
-        chosen.push(pool.splice(i, 1)[0]);
-    }
+    // Först en variant per position, så att felen sprids över hela namnet
+    // i stället för att alla ändrar samma bokstav
+    pool.forEach(variant => {
+        if (chosen.length < count && !usedPositions.has(variant.position)) {
+            usedPositions.add(variant.position);
+            chosen.push(variant.value);
+        }
+    });
 
-    // Skulle något namn vara för kort för att varieras nog, fyll på
-    // med en enkel ändelse så att det alltid blir fyra alternativ
+    // Fyll på med resten om positionerna inte räckte
+    pool.forEach(variant => {
+        if (chosen.length < count && !chosen.includes(variant.value)) {
+            chosen.push(variant.value);
+        }
+    });
+
+    // Nödutgång för namn som är för korta för att varieras tillräckligt
     let suffix = 0;
     while (chosen.length < count) {
         chosen.push(name + 'a'.repeat(++suffix));
@@ -110,7 +143,7 @@ function buildQuestions() {
             category: 'Pokémon',
             question: 'Vad heter denna Pokémon?',
             image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' + p.id + '.png',
-            options: [p.name, ...pickMisspelledOptions(p.name, 3)],
+            options: [p.name, ...pickMisspelledOptions(p.name, WRONG_OPTIONS)],
             answer: p.name
         });
     });
@@ -121,7 +154,7 @@ function buildQuestions() {
             category: 'Naruto',
             question: 'Vem är denna karaktär?',
             image: c.img,
-            options: [c.name, ...pickMisspelledOptions(c.name, 3)],
+            options: [c.name, ...pickMisspelledOptions(c.name, WRONG_OPTIONS)],
             answer: c.name
         });
     });
