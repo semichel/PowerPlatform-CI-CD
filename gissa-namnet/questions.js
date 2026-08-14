@@ -14,8 +14,8 @@ function pickWrongOptions(correctName, pool, count) {
 function buildQuestions() {
     const questions = [];
 
-    const pokeNames = POKEMON_101.map(p => p.name);
-    POKEMON_101.forEach(p => {
+    const pokeNames = POKEMON_GEN1.map(p => p.name);
+    POKEMON_GEN1.forEach(p => {
         questions.push({
             id: 'pokemon-' + p.id,
             category: 'Pokémon',
