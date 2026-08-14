@@ -24,6 +24,8 @@
                         <li>Varje rätt svar ger <strong>+100 kr</strong></li>
                         <li>Varje fel svar kostar <strong>500 kr</strong></li>
                         <li>Du hamnar aldrig under <strong>500 kr</strong></li>
+                        <li>Figuren visas i <strong>silhuett</strong> &#x2013; du har <strong>10 sekunder</strong> på dig</li>
+                        <li>Alternativen är <strong>felstavningar</strong> av rätt namn</li>
                         <li>Efter varje svar väljer du om du vill fortsätta</li>
                         <li>Alla rätt utan fel ger maxsumman <strong id="rules-max"></strong></li>
                     </ul>
@@ -54,10 +56,19 @@
                 </div>
             </div>
 
+            <div class="timer">
+                <div class="timer-track">
+                    <div class="timer-bar" id="timer-bar"></div>
+                </div>
+                <div class="timer-text" id="timer-text">10s</div>
+            </div>
+
             <div class="question-card">
                 <div class="card-category" id="card-category"></div>
                 <div class="card-question" id="card-question"></div>
-                <img id="card-image" class="card-image hidden" alt="">
+                <div id="card-image-frame" class="card-image-frame hidden">
+                    <img id="card-image" class="card-image" alt="">
+                </div>
             </div>
 
             <div class="options-grid" id="options-container"></div>
