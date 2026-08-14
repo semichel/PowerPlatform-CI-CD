@@ -1,92 +1,86 @@
 // Bygger frågor från karaktärsdatan i characters.js
-// Varje fråga visar en bild och fyra namnalternativ. De tre felaktiga är
-// felstavningar av det rätta namnet - aldrig namn på andra figurer.
-// Nidorina får alltså sällskap av Nidorena, Nidorinna och Nidorona.
+// Varje fråga visar en bild och fyra tydligt olika namnalternativ.
+// De tre felaktiga är påhittade namn - varken det rätta namnet i felstavad
+// form eller namnet på någon annan riktig figur. De sätts ihop av stavelser
+// från riktiga namn så att de låter trovärdiga: bara ett av de fyra namnen
+// finns på riktigt, och man måste veta vilket.
 
-const WRONG_OPTIONS = 3; // tre felstavningar + rätt svar = fyra alternativ
-
-const VOWELS = ['a', 'e', 'i', 'o', 'u', 'y'];
-
-// Konsonanter som lätt förväxlas när man stavar
-const CONSONANT_SWAPS = {
-    b: ['p'], p: ['b'], d: ['t'], t: ['d'], g: ['k', 'j'], k: ['c', 'g'],
-    c: ['k', 's'], s: ['z', 'c'], z: ['s'], v: ['w', 'f'], w: ['v'],
-    f: ['v'], m: ['n'], n: ['m'], r: ['l'], l: ['r'], j: ['g'], h: ['k']
-};
+const WRONG_OPTIONS = 3; // tre påhittade namn + rätt svar = fyra alternativ
 
 function normalizeName(name) {
     return name.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-const isLetter = ch => /[a-zA-Z]/.test(ch);
-
-// Alla riktiga namn - en felstavning får aldrig råka bli en annan figur
+// Alla riktiga namn - ett påhittat namn får aldrig råka bli en riktig figur
 function buildRealNameSet() {
     const set = new Set();
     POKEMON_GEN1.forEach(p => set.add(normalizeName(p.name)));
-    NARUTO_CHARS.forEach(c => set.add(normalizeName(c.name)));
+    NARUTO_CHARS.forEach(c => {
+        set.add(normalizeName(c.name));
+        // även varje enskilt ord, så vi inte hittar på "Sasuke Hatake"
+        c.name.split(/\s+/).forEach(word => set.add(normalizeName(word)));
+    });
     return set;
 }
 
 const REAL_NAMES = buildRealNameSet();
 
-// Skapar rimliga felstavningar av ett namn.
-// Första bokstaven lämnas i fred så att namnet fortfarande ser rätt ut.
-function generateMisspellings(name) {
-    const variants = [];
-    let position = 0;
-    const push = (value, kind) => {
-        if (value && value.length > 2) variants.push({ value, kind, position });
-    };
-
-    for (let i = 1; i < name.length; i++) {
-        const ch = name[i];
-        if (!isLetter(ch)) continue;
-        // Rör inte bokstaven som inleder ett ord - "Mr. ime" ser trasigt ut,
-        // inte felstavat
-        if (!isLetter(name[i - 1])) continue;
-
-        const before = name.slice(0, i);
-        const after = name.slice(i + 1);
-        const lower = ch.toLowerCase();
-        position = i;
-
-        // Byt ut en vokal mot en annan: Nidorina -> Nidorena
-        if (VOWELS.includes(lower)) {
-            VOWELS.forEach(v => {
-                if (v !== lower) push(before + v + after, 'substitution');
-            });
-        }
-
-        // Dubblera en bokstav: Nidorina -> Nidorinna
-        push(before + ch + ch + after, 'doubling');
-
-        // Ta bort en bokstav: Nidorina -> Nidorna
-        if (name.length > 4) push(before + after, 'deletion');
-
-        // Kasta om två bokstäver: Nidorina -> Nidorian
-        if (i + 1 < name.length && isLetter(name[i + 1]) && name[i + 1].toLowerCase() !== lower) {
-            push(before + name[i + 1] + ch + name.slice(i + 2), 'transposition');
-        }
-
-        // Byt mot en konsonant som låter likt: Pidgey -> Bidgey
-        (CONSONANT_SWAPS[lower] || []).forEach(swap => {
-            push(before + swap + after, 'substitution');
-        });
+// Delar upp ett ord i stavelser: "charizard" -> ["cha", "ri", "zard"]
+function splitSyllables(word) {
+    const parts = word.match(/[^aeiouyåäö]*[aeiouyåäö]+/gi);
+    if (!parts || parts.length === 0) return [word];
+    const consumed = parts.join('').length;
+    if (consumed < word.length) {
+        parts[parts.length - 1] += word.slice(consumed);
     }
-
-    // Rensa bort dubbletter, det rätta namnet och allt som är ett riktigt namn
-    const correct = normalizeName(name);
-    const seen = new Set();
-    return variants.filter(variant => {
-        const key = normalizeName(variant.value);
-        if (key === correct || REAL_NAMES.has(key) || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-    });
+    return parts;
 }
 
-function shuffleOptions(list) {
+function capitalize(word) {
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+}
+
+// Bygger ett nytt namn av enstaka stavelser hämtade från olika riktiga namn.
+// Att ta en stavelse i taget gör att inga igenkännbara ordbörjor som "Bulba"
+// eller "Pika" följer med och avslöjar att namnet är ihopklippt.
+// Konsonantkluster som fungerar i början av ett ord
+const VALID_ONSET = /^(?:[bcdfgklpst]r|[bcfgkps]l|ch|sh|th|wh|sc|sk|sm|sn|sp|st|sw|tw|ph|[bcdfghjklmnpqrstvwxyz])?[aeiouy]/;
+
+// Ett hopsatt namn måste gå att uttala. Utan den här kontrollen blir det
+// "Ctrogeonsey" och "Rseavistoi" när två konsonantkluster hamnar bredvid varandra.
+function isPronounceable(word) {
+    if (/[^aeiouy]{3,}/.test(word)) return false;  // tre konsonanter i rad
+    if (/[aeiouy]{3,}/.test(word)) return false;   // tre vokaler i rad
+    return VALID_ONSET.test(word);
+}
+
+function composeName(syllablePool) {
+    const count = 2 + Math.floor(Math.random() * 2); // två eller tre stavelser
+    let word = '';
+    for (let i = 0; i < count; i++) {
+        word += pickRandom(syllablePool);
+    }
+    if (word.length < 5 || word.length > 11) return null;
+    if (!isPronounceable(word)) return null;
+    return capitalize(word);
+}
+
+// Alla stavelser som förekommer i en uppsättning namn
+function buildSyllablePool(names) {
+    const pool = [];
+    names.forEach(name => {
+        splitSyllables(name.toLowerCase()).forEach(syllable => {
+            if (syllable.length >= 2 && syllable.length <= 4) pool.push(syllable);
+        });
+    });
+    return pool;
+}
+
+function pickRandom(list) {
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+function shuffleList(list) {
     const shuffled = [...list];
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -95,40 +89,66 @@ function shuffleOptions(list) {
     return shuffled;
 }
 
-function pickMisspelledOptions(name, count) {
-    // Lotta fritt bland alla varianter - en blandning av utbytta, omkastade,
-    // dubblerade och borttagna bokstäver, inte bara de allra lurigaste
-    const pool = shuffleOptions(generateMisspellings(name));
+// Skapar påhittade namn som ska stå bredvid det rätta svaret
+function makeFakeNames(answer, sourceNames, count) {
+    const answerKey = normalizeName(answer);
+    const others = sourceNames.filter(n => normalizeName(n) !== answerKey);
+    const pool = buildSyllablePool(others);
     const chosen = [];
-    const usedPositions = new Set();
+    const usedKeys = new Set([answerKey]);
+    const usedInitials = new Set([answer[0].toUpperCase()]);
 
-    // Först en variant per position, så att felen sprids över hela namnet
-    // i stället för att alla ändrar samma bokstav
-    pool.forEach(variant => {
-        if (chosen.length < count && !usedPositions.has(variant.position)) {
-            usedPositions.add(variant.position);
-            chosen.push(variant.value);
-        }
-    });
+    for (let attempt = 0; attempt < 600 && chosen.length < count; attempt++) {
+        const fake = composeName(pool);
+        if (!fake) continue;
 
-    // Fyll på med resten om positionerna inte räckte
-    pool.forEach(variant => {
-        if (chosen.length < count && !chosen.includes(variant.value)) {
-            chosen.push(variant.value);
-        }
-    });
+        const key = normalizeName(fake);
+        if (usedKeys.has(key) || REAL_NAMES.has(key)) continue;
 
-    // Nödutgång för namn som är för korta för att varieras tillräckligt
-    let suffix = 0;
+        // Får inte likna det rätta svarets början - då ser det ut som en
+        // felstavning i stället för ett eget namn
+        if (key.slice(0, 3) === answerKey.slice(0, 3)) continue;
+
+        // Olika begynnelsebokstav gör att de fyra alternativen ser
+        // tydligt olika ut. Kravet släpps om det blir för svårt att uppfylla.
+        const initial = fake[0].toUpperCase();
+        if (attempt < 400 && usedInitials.has(initial)) continue;
+
+        usedKeys.add(key);
+        usedInitials.add(initial);
+        chosen.push(fake);
+    }
+
+    // Nödutgång om kompositionen inte gav tillräckligt
+    let n = 0;
     while (chosen.length < count) {
-        chosen.push(name + 'a'.repeat(++suffix));
+        const fallback = capitalize(pickRandom(pool) + pickRandom(pool) + 'ra'.repeat(++n));
+        if (!REAL_NAMES.has(normalizeName(fallback))) chosen.push(fallback);
     }
 
     return chosen;
 }
 
+// Naruto-figurerna har för- och efternamn - då hittar vi på båda delarna
+function makeFakeNarutoNames(answer, count) {
+    const firstNames = NARUTO_CHARS.map(c => c.name.split(/\s+/)[0]);
+    const lastNames = NARUTO_CHARS
+        .map(c => c.name.split(/\s+/)[1])
+        .filter(Boolean)
+        .filter(word => /^[A-Za-z]+$/.test(word));
+
+    const hasSurname = answer.split(/\s+/).length > 1;
+    const fakeFirst = makeFakeNames(answer.split(/\s+/)[0], firstNames, count);
+
+    if (!hasSurname || lastNames.length < 2) return fakeFirst;
+
+    const fakeLast = makeFakeNames(answer.split(/\s+/)[1], lastNames, count);
+    return fakeFirst.map((first, i) => first + ' ' + (fakeLast[i] || fakeLast[0]));
+}
+
 function buildQuestions() {
     const questions = [];
+    const pokeNames = POKEMON_GEN1.map(p => p.name);
 
     POKEMON_GEN1.forEach(p => {
         questions.push({
@@ -136,7 +156,7 @@ function buildQuestions() {
             category: 'Pokémon',
             question: 'Vad heter denna Pokémon?',
             image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' + p.id + '.png',
-            options: [p.name, ...pickMisspelledOptions(p.name, WRONG_OPTIONS)],
+            options: shuffleList([p.name, ...makeFakeNames(p.name, pokeNames, WRONG_OPTIONS)]),
             answer: p.name
         });
     });
@@ -147,7 +167,7 @@ function buildQuestions() {
             category: 'Naruto',
             question: 'Vem är denna karaktär?',
             image: c.img,
-            options: [c.name, ...pickMisspelledOptions(c.name, WRONG_OPTIONS)],
+            options: shuffleList([c.name, ...makeFakeNarutoNames(c.name, WRONG_OPTIONS)]),
             answer: c.name
         });
     });
