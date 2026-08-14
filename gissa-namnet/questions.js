@@ -155,7 +155,7 @@ function buildQuestions() {
             id: 'pokemon-' + p.id,
             category: 'Pokémon',
             question: 'Vad heter denna Pokémon?',
-            image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' + p.id + '.png',
+            image: 'img/pokemon/' + p.id + '.png',
             options: shuffleList([p.name, ...makeFakeNames(p.name, pokeNames, WRONG_OPTIONS)]),
             answer: p.name
         });

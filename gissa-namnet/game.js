@@ -174,6 +174,18 @@ function showQuestion() {
     waitingForAnswer = true;
     renderOptions(currentQuestion);
     startTimer();
+    preloadUpcomingImages();
+}
+
+// Hämtar hem nästa bilder i förväg så att de visas direkt när frågan byts
+function preloadUpcomingImages() {
+    for (let i = deckIndex; i < Math.min(deckIndex + 3, deck.length); i++) {
+        const next = deck[i];
+        if (next && next.image) {
+            const img = new Image();
+            img.src = next.image;
+        }
+    }
 }
 
 // Tidsgräns - hinner man inte svara räknas det som fel
