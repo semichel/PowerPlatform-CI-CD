@@ -1,22 +1,24 @@
 // Gissa Namnet - enspelarläge med plånbok
-// Du börjar på 500 kr, varje rätt svar ger 100 kr och målet är 5 000 kr.
-// Ett fel svar tar dig tillbaka till startsumman igen.
+// Start: 500 kr. Rätt svar ger 100 kr, fel svar kostar 500 kr.
+// Efter varje svar väljer du själv om du vill fortsätta eller sluta.
+// Maxsumman får du genom att svara rätt på alla frågor utan ett enda fel.
 
 const START_MONEY = 500;
 const MONEY_PER_CORRECT = 100;
-const GOAL_MONEY = 5000;
+const WRONG_PENALTY = 500;
 
 let money = START_MONEY;
 let streak = 0;
+let mistakes = 0;
 let questionNumber = 0;
 let deck = [];
 let deckIndex = 0;
 let currentQuestion = null;
 let waitingForAnswer = false;
-let selectedCategories = new Set(CATEGORIES);
 
-// Antal rätt i rad som krävs för att nå målet
-const CORRECT_NEEDED = Math.ceil((GOAL_MONEY - START_MONEY) / MONEY_PER_CORRECT);
+// Alla frågor är med - maxsumman är alla rätt utan fel
+const TOTAL_QUESTIONS = QUESTIONS.length;
+const MAX_SCORE = START_MONEY + MONEY_PER_CORRECT * TOTAL_QUESTIONS;
 
 function formatMoney(amount) {
     return amount.toLocaleString('sv-SE') + ' kr';
@@ -39,12 +41,6 @@ function markQuestionSeen(q) {
     localStorage.setItem('seenQuestionsGissa', JSON.stringify([...seen]));
 }
 
-function resetQuestionHistory() {
-    localStorage.removeItem('seenQuestionsGissa');
-    alert('Frågehistorik nollställd!');
-    Logger.log('GAME', 'Frågehistorik nollställd manuellt');
-}
-
 // Bästa resultat sparas mellan spelomgångar
 function getBestMoney() {
     const value = parseInt(localStorage.getItem('bestMoneyGissa') || '0', 10);
@@ -54,9 +50,7 @@ function getBestMoney() {
 function saveBestMoney(amount) {
     if (amount > getBestMoney()) {
         localStorage.setItem('bestMoneyGissa', String(amount));
-        return true;
     }
-    return false;
 }
 
 function renderBestRecord() {
@@ -73,76 +67,54 @@ function renderBestRecord() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    renderCategoryButtons('category-buttons');
+    const maxEl = document.getElementById('rules-max');
+    if (maxEl) maxEl.textContent = formatMoney(MAX_SCORE);
     renderBestRecord();
 });
-
-// Category buttons
-function renderCategoryButtons(containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    container.innerHTML = CATEGORIES.map(cat =>
-        `<button class="cat-btn selected" onclick="toggleCategory(this, '${cat}')">${cat}</button>`
-    ).join('');
-}
-
-function toggleCategory(btn, category) {
-    btn.classList.toggle('selected');
-    if (selectedCategories.has(category)) {
-        selectedCategories.delete(category);
-    } else {
-        selectedCategories.add(category);
-    }
-}
 
 // Flip screen upside down
 function toggleFlip() {
     document.getElementById('app').classList.toggle('flipped');
 }
 
-// Bygg en kortlek: osedda frågor först, resten efter
+// Kortlek med alla frågor - osedda först, sedan resten
 function buildDeck() {
-    const cats = [...selectedCategories];
-    const pool = QUESTIONS.filter(q => cats.includes(q.category));
     const seen = getSeenQuestions();
-    const unseen = pool.filter(q => !seen.has(getQuestionKey(q)));
-    const rest = pool.filter(q => seen.has(getQuestionKey(q)));
-    Logger.log('GAME', `Kortlek byggd: ${pool.length} frågor (${unseen.length} osedda)`);
+    const unseen = QUESTIONS.filter(q => !seen.has(getQuestionKey(q)));
+    const rest = QUESTIONS.filter(q => seen.has(getQuestionKey(q)));
+    Logger.log('GAME', `Kortlek byggd: ${QUESTIONS.length} frågor (${unseen.length} osedda)`);
     return [...shuffleArray(unseen), ...shuffleArray(rest)];
 }
 
 function startGame() {
-    if (selectedCategories.size === 0) {
-        alert('Välj minst en kategori!');
-        return;
-    }
-
     money = START_MONEY;
     streak = 0;
+    mistakes = 0;
     questionNumber = 0;
     deck = buildDeck();
     deckIndex = 0;
 
-    if (deck.length === 0) {
-        alert('Inga frågor att spela!');
-        return;
-    }
+    document.getElementById('question-total').textContent = TOTAL_QUESTIONS;
+    document.getElementById('wallet-goal').textContent = 'Max: ' + formatMoney(MAX_SCORE);
 
-    Logger.log('GAME', `Spel startat! Plånbok: ${formatMoney(money)} | Mål: ${formatMoney(GOAL_MONEY)} (${CORRECT_NEEDED} rätt i rad)`);
+    Logger.log('GAME', `Spel startat! ${formatMoney(money)} | Max: ${formatMoney(MAX_SCORE)} (${TOTAL_QUESTIONS} frågor)`);
     showScreen('game-screen');
     showQuestion();
 }
 
-function nextQuestion() {
+function continueGame() {
     showQuestion();
 }
 
+function stopGame() {
+    endGame('stopped');
+}
+
 function showQuestion() {
-    // Kortleken tar slut - blanda om och börja från början igen
+    // Alla frågor besvarade - spelet är slut
     if (deckIndex >= deck.length) {
-        deck = shuffleArray(deck);
-        deckIndex = 0;
-        Logger.log('GAME', 'Kortleken slut - blandar om');
+        endGame('finished');
+        return;
     }
 
     currentQuestion = deck[deckIndex];
@@ -177,12 +149,12 @@ function showQuestion() {
 function updateWallet() {
     document.getElementById('wallet-amount').textContent = formatMoney(money);
 
-    const progress = Math.min(100, (money / GOAL_MONEY) * 100);
+    const progress = Math.max(0, Math.min(100, (money / MAX_SCORE) * 100));
     document.getElementById('wallet-progress-bar').style.width = progress + '%';
 
     const streakEl = document.getElementById('streak-info');
     if (streakEl) {
-        streakEl.textContent = streak > 0 ? `${streak} rätt i rad` : '';
+        streakEl.textContent = streak > 1 ? `${streak} rätt i rad` : '';
     }
 }
 
@@ -215,13 +187,14 @@ function selectAnswer(selectedOption) {
     markQuestionSeen(q);
 
     if (correct) {
-        money = Math.min(GOAL_MONEY, money + MONEY_PER_CORRECT);
+        money += MONEY_PER_CORRECT;
         streak++;
-        Logger.log('PLAYER', `RÄTT (${q.answer}) | Plånbok: ${formatMoney(money)} | ${streak} i rad`);
+        Logger.log('PLAYER', `RÄTT (${q.answer}) | ${formatMoney(money)} | ${streak} i rad`);
     } else {
-        Logger.log('PLAYER', `FEL - svarade ${selectedOption}, rätt: ${q.answer} | Tappade ${formatMoney(money)} - börjar om`);
-        money = START_MONEY;
+        money -= WRONG_PENALTY;
         streak = 0;
+        mistakes++;
+        Logger.log('PLAYER', `FEL - svarade ${selectedOption}, rätt: ${q.answer} | -${formatMoney(WRONG_PENALTY)} | ${formatMoney(money)}`);
     }
 
     saveBestMoney(money);
@@ -229,10 +202,6 @@ function selectAnswer(selectedOption) {
 }
 
 function showResult(q, correct, selectedOption) {
-    const resultArea = document.getElementById('result-area');
-    const resultText = document.getElementById('result-text');
-    const resultPoints = document.getElementById('result-points');
-
     document.getElementById('card-category').textContent = q.category;
 
     document.querySelectorAll('.option-btn').forEach(btn => {
@@ -248,49 +217,81 @@ function showResult(q, correct, selectedOption) {
 
     updateWallet();
 
-    // Målet nått!
-    if (correct && money >= GOAL_MONEY) {
-        endGame(true);
+    // Pengarna är slut
+    if (money <= 0) {
+        endGame('broke');
         return;
     }
 
+    const resultText = document.getElementById('result-text');
+    const resultPoints = document.getElementById('result-points');
+
     if (correct) {
         resultText.textContent = `Rätt! Det är ${q.answer}.`;
-        resultPoints.textContent = `+${formatMoney(MONEY_PER_CORRECT)}`;
+        resultPoints.textContent = '+' + formatMoney(MONEY_PER_CORRECT);
         resultPoints.className = 'points-perfect';
     } else {
-        resultText.textContent = `Fel! Det är ${q.answer}. Du börjar om från ${formatMoney(START_MONEY)}.`;
-        resultPoints.textContent = formatMoney(START_MONEY);
+        resultText.textContent = `Fel! Det är ${q.answer}.`;
+        resultPoints.textContent = '-' + formatMoney(WRONG_PENALTY);
         resultPoints.className = 'points-far';
     }
 
+    // Sista frågan - inget mer att fortsätta med
+    const isLastQuestion = deckIndex >= deck.length;
+    const prompt = document.getElementById('continue-prompt');
+    const continueBtn = document.getElementById('continue-btn');
+    const stopBtn = document.getElementById('stop-btn');
+
+    if (isLastQuestion) {
+        prompt.textContent = 'Det var sista frågan!';
+        continueBtn.classList.add('hidden');
+        stopBtn.textContent = 'Se resultatet';
+    } else {
+        prompt.textContent = 'Vill du fortsätta?';
+        continueBtn.classList.remove('hidden');
+        stopBtn.textContent = 'Nej, sluta';
+    }
+
+    const resultArea = document.getElementById('result-area');
     resultArea.classList.remove('hidden');
+    // Se till att svaret och knapparna syns utan att man behöver scrolla
+    resultArea.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
-function quitGame() {
-    endGame(false);
-}
-
-function endGame(won) {
-    const best = getBestMoney();
+function endGame(reason) {
     const emoji = document.getElementById('end-emoji');
     const title = document.getElementById('end-title');
     const summary = document.getElementById('end-summary');
     const record = document.getElementById('end-record');
 
-    if (won) {
-        emoji.textContent = '\u{1F3C6}';
-        title.textContent = 'Du klarade det!';
-        summary.innerHTML = `Du nådde <strong>${formatMoney(GOAL_MONEY)}</strong> på ${streak} rätt i rad!`;
-        Logger.log('GAME', `MÅLET NÅTT! ${formatMoney(money)} på ${streak} rätt i rad`);
+    const answered = questionNumber;
+    const correctCount = answered - mistakes;
+    const perfect = mistakes === 0 && answered === TOTAL_QUESTIONS;
+    const questionWord = answered === 1 ? 'fråga' : 'frågor';
+
+    if (perfect) {
+        emoji.textContent = '\u{1F451}';
+        title.textContent = 'Perfekt spel!';
+        summary.innerHTML = `Alla ${TOTAL_QUESTIONS} rätt utan ett enda fel &#x2013; maxsumman <strong>${formatMoney(money)}</strong>!`;
+    } else if (reason === 'broke') {
+        emoji.textContent = '\u{1F4B8}';
+        title.textContent = 'Pengarna tog slut!';
+        summary.innerHTML = `Du hamnade på <strong>${formatMoney(money)}</strong> efter ${answered} ${questionWord}.`;
+    } else if (reason === 'finished') {
+        emoji.textContent = '\u{1F3C1}';
+        title.textContent = 'Alla frågor klara!';
+        summary.innerHTML = `Du slutade på <strong>${formatMoney(money)}</strong> med ${correctCount} rätt av ${answered}.`;
     } else {
         emoji.textContent = '\u{1F44B}';
-        title.textContent = 'Spelet är slut!';
-        summary.innerHTML = `Du slutade med <strong>${formatMoney(money)}</strong> efter ${questionNumber} frågor.`;
-        Logger.log('GAME', `Spel avslutat med ${formatMoney(money)} efter ${questionNumber} frågor`);
+        title.textContent = 'Bra spelat!';
+        summary.innerHTML = `Du slutade på <strong>${formatMoney(money)}</strong> med ${correctCount} rätt av ${answered}.`;
     }
 
+    saveBestMoney(money);
+    const best = getBestMoney();
     record.textContent = best > 0 ? 'Ditt rekord: ' + formatMoney(best) : '';
+
+    Logger.log('GAME', `Slut (${reason}): ${formatMoney(money)} | ${correctCount}/${answered} rätt | ${mistakes} fel`);
     showScreen('end-screen');
 }
 
