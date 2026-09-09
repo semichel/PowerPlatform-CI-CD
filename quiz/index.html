@@ -14,7 +14,7 @@
             <div class="logo">
                 <h1>Frågesport</h1>
                 <p class="subtitle">Testa dina kunskaper!</p>
-                <p class="version">v2.5</p>
+                <p class="version">v2.6</p>
             </div>
             <div class="mode-select">
                 <button class="btn-mode" onclick="showLocalSetup()">
@@ -30,7 +30,6 @@
             </div>
             <button class="btn-secondary" onclick="startImageTest()">Testa bildfrågor</button>
             <button class="btn-secondary btn-small-text" onclick="resetQuestionHistory()">Nollställ frågehistorik</button>
-            <button class="btn-secondary btn-small-text" onclick="toggleFlip()">Vänd skärmen</button>
         </div>
 
         <!-- Local Setup Screen -->
@@ -124,7 +123,6 @@
             <div class="game-header">
                 <div class="round-info">Fråga <span id="current-question">1</span> / <span id="total-questions">10</span></div>
                 <div class="current-player">Det är <span id="player-turn"></span>s tur</div>
-                <button class="btn-flip" onclick="toggleFlip()" title="Vänd skärmen">&#x1F503;</button>
             </div>
             <div class="scoreboard" id="scoreboard"></div>
             <div id="round-points" class="round-points hidden"></div>
@@ -168,6 +166,8 @@
             <button class="btn-primary" onclick="resetGame()">Spela igen</button>
         </div>
     </div>
+
+    <button class="btn-flip" onclick="toggleFlip()" title="Vänd skärmen">↕</button>
 
     <script src="logger.js"></script>
     <script src="images.js"></script>
